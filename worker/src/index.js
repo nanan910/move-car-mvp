@@ -1,5 +1,6 @@
 const JSON_HEADERS = { "Content-Type": "application/json; charset=utf-8" };
 const NOTIFY_COOLDOWN_SECONDS = 120;
+const MAX_OCR_IMAGE_BYTES = 4 * 1024 * 1024;
 
 export default {
   async fetch(request, env) {
@@ -73,10 +74,11 @@ function json(body, status = 200) {
 }
 
 async function handlePlateOcr({ request, env }) {
-  assertConfig(env, ["TENCENT_SECRET_ID", "TENCENT_SECRET_KEY"]);
   const form = await request.formData();
   const image = form.get("image");
-  if (!image || typeof image === "string") return json({ error: "missing_image", message: "请上传车牌照片。" }, 400);
+  const imageError = validateOcrImage(image, env);
+  if (imageError) return json(imageError, 400);
+  assertConfig(env, ["TENCENT_SECRET_ID", "TENCENT_SECRET_KEY"]);
   const bytes = new Uint8Array(await image.arrayBuffer());
   const imageBase64 = bytesToBase64(bytes);
   const result = await tencentApi(env, {
@@ -93,6 +95,20 @@ async function handlePlateOcr({ request, env }) {
     candidates: plateNumber ? [{ plateNumber, color: result.Color || "" }] : [],
     rawRequestId: result.RequestId,
   });
+}
+
+function validateOcrImage(image, env) {
+  if (!image || typeof image === "string") {
+    return { error: "missing_image", message: "请上传车牌照片。" };
+  }
+  const maxBytes = Number(env.MAX_OCR_IMAGE_BYTES || MAX_OCR_IMAGE_BYTES);
+  if (image.size > maxBytes) {
+    return { error: "image_too_large", message: `图片不能超过 ${Math.floor(maxBytes / 1024 / 1024)}MB。` };
+  }
+  if (image.type && !image.type.startsWith("image/")) {
+    return { error: "invalid_image_type", message: "请上传 JPG、PNG、HEIC 等图片文件。" };
+  }
+  return null;
 }
 
 async function handleCreateVehicle({ request, env }) {
