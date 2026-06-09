@@ -94,8 +94,9 @@ async function main() {
     const wechatPublicText = JSON.stringify(wechatPublic.body);
     assert(wechatPublic.body.availableChannels.includes("wechat_work"), "WeCom channel should be public as a channel only");
     assert(!wechatPublicText.includes("private-wechat-key"), "public response must not leak WeCom webhook");
-    const wechatNotify = await call("POST", `/api/vehicles/${wechatVehicle.body.vehicleToken}/notify`, { channel: "wechat_work" });
-    assert(wechatNotify.status === 200, "WeCom notify should return 200");
+    const wechatNotify = await call("POST", `/api/vehicles/${wechatVehicle.body.vehicleToken}/notify`, {});
+    assert(wechatNotify.status === 200, "default notify should return 200 for WeCom vehicle");
+    assert(wechatNotify.body.channel === "wechat_work", "default notify should prefer WeCom channel");
     assert(sentWebhooks.some((item) => item.kind === "wechat_work"), "WeCom webhook should be called once");
 
     const notify = await call("POST", `/api/vehicles/${created.body.vehicleToken}/notify`, { channel: "showdoc" });
