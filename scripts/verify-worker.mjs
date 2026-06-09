@@ -10,6 +10,14 @@ async function main() {
   globalThis.fetch = mockFetch(sentWebhooks);
 
   try {
+    const health = await call("GET", "/api/health");
+    const healthText = JSON.stringify(health.body);
+    assert(health.status === 200, "health should return 200");
+    assert(health.body.status === "ok", "health status should be ok");
+    assert(health.body.d1 === true, "health should report D1 binding");
+    assert(health.body.encryption === true, "health should report encryption key presence");
+    assert(!healthText.includes("test-encryption-key"), "health must not leak secrets");
+
     const created = await call("POST", "/api/vehicles", {
       plateNumber: "粤B12345",
       showdocWebhook: "https://showdoc.example/webhook",
