@@ -6,6 +6,7 @@
 
 - GitHub Pages：[https://nanan910.github.io/move-car-mvp/](https://nanan910.github.io/move-car-mvp/)
 - 部署检查页：[https://nanan910.github.io/move-car-mvp/setup.html](https://nanan910.github.io/move-car-mvp/setup.html)
+- 隐私说明页：[https://nanan910.github.io/move-car-mvp/privacy.html](https://nanan910.github.io/move-car-mvp/privacy.html)
 - 当前线上版本默认启用浏览器 demo 模式，可以演示车牌识别、车辆绑定、二维码、访客通知和车主管理。
 - 真实 ShowDoc/短信/隐私号通知需要完成 Cloudflare Worker、D1、腾讯云和通知密钥配置后再启用。
 
@@ -15,6 +16,7 @@
 - 已实现 Cloudflare Worker API、D1 migration、隐私字段加密、访客限流和 `/api/health`。
 - 已提供 GitHub Actions workflow：Pages 可自动发布；Worker workflow 待 Cloudflare secrets 配置后启用。
 - 已通过 `preflight.ps1`、Mock MVP 验收和 Worker 隐私/限流验收。
+- 隐私与安全说明见 [docs/PRIVACY_AND_SECURITY.md](docs/PRIVACY_AND_SECURITY.md)。
 
 ## 功能
 
