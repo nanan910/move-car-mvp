@@ -57,6 +57,17 @@ Invoke-Checked $NodePath @("scripts/verify-mvp.mjs")
 Write-Step "Running Worker privacy/rate-limit verification"
 Invoke-Checked $NodePath @("scripts/verify-worker.mjs")
 
+Write-Step "Checking PowerShell helper script syntax"
+$powerShellScripts = @(
+  "scripts/configure-cloudflare.ps1",
+  "scripts/set-worker-secrets.ps1",
+  "scripts/set-ocr-secrets.ps1",
+  "scripts/check-production.ps1"
+)
+foreach ($script in $powerShellScripts) {
+  [scriptblock]::Create((Get-Content -Path $script -Raw)) | Out-Null
+}
+
 Write-Step "Checking deployment placeholders"
 $wrangler = Get-Content worker/wrangler.toml -Raw
 if ($wrangler -match "replace-with-your-d1-database-id") {
