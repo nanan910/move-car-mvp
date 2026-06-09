@@ -245,7 +245,7 @@ git push -u origin main
 
 ## ShowDoc 通知
 
-ShowDoc 通知按“服务端 POST 到用户提供的 webhook/API 地址”实现，请在车主绑定页填写 webhook 和可选 token。Worker 会发送如下 JSON：
+ShowDoc 通知按“服务端 POST 到用户提供的 webhook/API 地址”实现。它不是必填项；车主可以只配置微信通知，也可以同时配置 ShowDoc 和微信通知。填写 ShowDoc webhook 和可选 token 后，Worker 会发送如下 JSON：
 
 ```json
 {
@@ -259,7 +259,7 @@ ShowDoc 通知按“服务端 POST 到用户提供的 webhook/API 地址”实�
 
 ## 微信通知
 
-第一版用企业微信群机器人 Webhook 作为微信生态通知通道。车主在绑定页或管理页填写企业微信群机器人地址后，访客页会出现“微信通知”按钮。Webhook 会加密保存在 D1，访客接口只返回 `wechat_work` 这个可用通道名，不会返回机器人地址或 key。
+第一版用企业微信群机器人 Webhook 作为微信生态通知通道。车主在绑定页或管理页填写企业微信群机器人地址后，访客页会出现“微信通知”按钮。Webhook 会加密保存在 D1，访客接口只返回 `wechat_work` 这个可用通道名，不会返回机器人地址或 key。绑定时至少需要配置 ShowDoc、微信、短信或隐私号中的一种通知方式。
 
 ## 隐私号呼叫
 
