@@ -20,6 +20,21 @@ async function main() {
     assert(health.body.missing.length === 2, "health should report missing Tencent OCR config in test env");
     assert(!healthText.includes("test-encryption-key"), "health must not leak secrets");
 
+    const invalidWebhook = await call("POST", "/api/vehicles", {
+      plateNumber: "粤B12345",
+      showdocWebhook: "ftp://showdoc.example/webhook",
+    });
+    assert(invalidWebhook.status === 400, "invalid webhook should return 400");
+    assert(invalidWebhook.body.error === "invalid_showdoc_webhook", "invalid webhook should return a typed error");
+
+    const missingPhone = await call("POST", "/api/vehicles", {
+      plateNumber: "粤B12345",
+      showdocWebhook: "https://showdoc.example/webhook",
+      smsEnabled: true,
+    });
+    assert(missingPhone.status === 400, "sms without phone should return 400");
+    assert(missingPhone.body.error === "invalid_phone", "sms without phone should return a typed error");
+
     const created = await call("POST", "/api/vehicles", {
       plateNumber: "粤B12345",
       showdocWebhook: "https://showdoc.example/webhook",
