@@ -81,6 +81,8 @@ Windows PowerShell 也可以直接运行：
 
 ## Cloudflare 部署
 
+详细步骤见 [docs/CLOUDFLARE_DEPLOY.md](docs/CLOUDFLARE_DEPLOY.md)。
+
 1. 安装依赖：
 
 ```bash
@@ -161,6 +163,12 @@ Worker 自动部署需要在 GitHub 仓库 Settings -> Secrets and variables -> 
 | `CLOUDFLARE_ACCOUNT_ID` | Secret | Cloudflare Account ID |
 
 Cloudflare Worker 运行时业务密钥仍通过 Wrangler secret 设置，不建议放进 GitHub Pages 前端或普通仓库文件。
+
+也可以运行配置脚本写入 GitHub Actions secrets 并更新公开配置：
+
+```powershell
+.\scripts\configure-cloudflare.ps1
+```
 
 ## 推送到 GitHub
 
