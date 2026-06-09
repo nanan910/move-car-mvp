@@ -134,6 +134,8 @@ Request:
 }
 ```
 
+`channel` may be omitted. The Worker then chooses the first available channel in this order: `wechat_work`, `showdoc`, `sms`, `privacy_call`.
+
 Valid channels:
 
 - `wechat_work`
