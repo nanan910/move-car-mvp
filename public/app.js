@@ -4,6 +4,7 @@ const page = document.body.dataset.page;
 const DEFAULT_API_BASE = localStorage.getItem("moveCarApiBase") || window.MOVE_CAR_API_BASE || "";
 const DEMO_MODE = Boolean(window.MOVE_CAR_DEMO_MODE);
 const DEMO_STORAGE_KEY = "moveCarDemoState";
+const MAX_OCR_IMAGE_BYTES = 4 * 1024 * 1024;
 
 function apiBase() {
   const input = document.querySelector("#apiBase");
@@ -200,6 +201,17 @@ function validatePhone(value, required) {
   return phone.replace(/[\s-]/g, "");
 }
 
+function validateImageFile(file) {
+  if (!file) throw new Error("请先选择车牌照片。");
+  if (file.type && !file.type.startsWith("image/")) {
+    throw new Error("请上传 JPG、PNG、HEIC 等图片文件。");
+  }
+  if (file.size > MAX_OCR_IMAGE_BYTES) {
+    throw new Error("图片不能超过 4MB，请压缩或重新拍摄后再上传。");
+  }
+  return file;
+}
+
 function moveUrl(vehicleToken) {
   const url = new URL("./move.html", location.href);
   url.searchParams.set("t", vehicleToken);
@@ -223,11 +235,39 @@ function setupBindPage() {
   const ocrResult = document.querySelector("#ocrResult");
   const bindResult = document.querySelector("#bindResult");
   const plateNumber = document.querySelector("#plateNumber");
+  const plateImage = document.querySelector("#plateImage");
+  let previewUrl = "";
+
+  plateImage.addEventListener("change", () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = "";
+    const file = plateImage.files[0];
+    if (!file) {
+      ocrResult.classList.add("hidden");
+      return;
+    }
+    try {
+      validateImageFile(file);
+      previewUrl = URL.createObjectURL(file);
+      show(
+        ocrResult,
+        `<img class="plate-preview" src="${previewUrl}" alt="车牌照片预览">
+         <div class="muted">照片仅用于车牌 OCR 识别，Worker 不会保存原图。</div>`
+      );
+    } catch (error) {
+      show(ocrResult, escapeHtml(error.message), true);
+    }
+  });
 
   ocrForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const file = document.querySelector("#plateImage").files[0];
-    if (!file) return;
+    const file = plateImage.files[0];
+    try {
+      validateImageFile(file);
+    } catch (error) {
+      show(ocrResult, escapeHtml(error.message), true);
+      return;
+    }
     const formData = new FormData();
     formData.set("image", file);
     show(ocrResult, "正在识别车牌...");
