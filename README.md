@@ -106,7 +106,7 @@ Worker 运行时密钥可用交互脚本配置：
 npx wrangler deploy --config worker/wrangler.toml
 ```
 
-正式上线前请删除或改回该 secret，并配置真实 `TENCENT_SECRET_ID` / `TENCENT_SECRET_KEY`。
+配置真实 `TENCENT_SECRET_ID` / `TENCENT_SECRET_KEY` 后，Worker 会自动优先使用腾讯云 OCR；正式生产仍建议删除 `OCR_DEMO_MODE`，避免健康检查和运维判断混淆。
 
 生产部署后可运行：
 
