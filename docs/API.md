@@ -31,7 +31,7 @@ Recognizes a plate from an uploaded image.
 Request:
 
 - `multipart/form-data`
-- field `image`: image file
+- field `image`: image file, max 4MB by default
 
 Response:
 
@@ -47,6 +47,14 @@ Required config:
 
 - `TENCENT_SECRET_ID`
 - `TENCENT_SECRET_KEY`
+
+Validation errors:
+
+- `missing_image`: no `image` field was uploaded
+- `invalid_image_type`: uploaded file is not an image
+- `image_too_large`: uploaded image is larger than `MAX_OCR_IMAGE_BYTES` or the default 4MB limit
+
+The Worker forwards the image to Tencent Cloud OCR and does not store the original photo in D1.
 
 ## `POST /api/vehicles`
 
