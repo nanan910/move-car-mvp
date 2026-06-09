@@ -54,7 +54,11 @@ if ($wrangler -match "replace-with-your-d1-database-id") {
 
 $config = Get-Content public/config.js -Raw
 if ($config -match 'MOVE_CAR_API_BASE\s*=\s*""') {
-  Write-Warning "public/config.js has an empty Worker API URL. Fill it before final GitHub Pages deployment."
+  if ($config -match 'MOVE_CAR_DEMO_MODE\s*=\s*true') {
+    Write-Host "public/config.js has no Worker API URL; browser demo mode is enabled."
+  } else {
+    Write-Warning "public/config.js has an empty Worker API URL. Fill it before final GitHub Pages deployment."
+  }
 }
 
 Write-Host ""
