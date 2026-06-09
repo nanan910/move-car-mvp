@@ -50,6 +50,15 @@ npm install
 .\scripts\set-ocr-secrets.ps1 -Deploy
 ```
 
+如果暂时没有腾讯云密钥，但需要演示完整绑定流程，可以临时开启服务端 OCR 演示模式：
+
+```powershell
+"true" | npx wrangler secret put OCR_DEMO_MODE --config worker/wrangler.toml
+npx wrangler deploy --config worker/wrangler.toml
+```
+
+正式上线前请删除或改回该 secret，并配置真实腾讯云 OCR 密钥。
+
 ```powershell
 npm install
 npx wrangler secret put DATA_ENCRYPTION_KEY --config worker/wrangler.toml
