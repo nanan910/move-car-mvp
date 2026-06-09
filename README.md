@@ -99,6 +99,14 @@ Worker 运行时密钥可用交互脚本配置：
 .\scripts\set-ocr-secrets.ps1 -Deploy
 ```
 
+从 OCR 演示模式切到正式腾讯云 OCR，推荐运行：
+
+```powershell
+.\scripts\promote-production.ps1
+```
+
+该脚本会设置腾讯云 OCR secrets、删除 `OCR_DEMO_MODE`、部署 Worker，并运行生产检查。
+
 没有腾讯云 OCR 密钥时，也可以临时开启服务端 OCR 演示模式完成绑定流程演示：
 
 ```powershell
