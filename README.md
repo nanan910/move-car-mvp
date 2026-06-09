@@ -31,6 +31,15 @@ npm run serve:public
 
 然后打开 `http://localhost:4173`。页面中的 API 地址填写已部署的 Cloudflare Worker 地址。
 
+线上 GitHub Pages 默认启用浏览器内 demo 模式：`public/config.js` 中 `MOVE_CAR_DEMO_MODE = true`。这可以在没有 Cloudflare Worker 的情况下演示 OCR、绑定、二维码、访客通知和车主管理。demo 数据只保存在当前浏览器的 `localStorage`，不会真正发送 ShowDoc/短信/隐私号通知。
+
+接入真实 Worker 后，把 `public/config.js` 改为：
+
+```js
+window.MOVE_CAR_API_BASE = "https://move-car-api.your-subdomain.workers.dev";
+window.MOVE_CAR_DEMO_MODE = false;
+```
+
 如果还没有 Cloudflare、腾讯云或 ShowDoc 配置，可以先用内置 Mock 服务完整演示：
 
 ```bash
