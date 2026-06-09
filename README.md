@@ -26,7 +26,7 @@
 - 车主管理页：通过 `ownerToken` 管理密钥链接更新通知配置、查看最近通知状态。
 - 访客挪车页：通过 `vehicleToken` 二维码打开，只显示脱敏车牌和可用通知按钮。
 - 部署检查页：打开 `setup.html` 查看 demo 模式、Worker 地址和 `/api/health` 状态。
-- 通知通道：ShowDoc webhook、腾讯云短信、隐私号呼叫适配器。
+- 通知通道：企业微信群机器人 webhook、ShowDoc webhook、腾讯云短信、隐私号呼叫适配器。
 - 隐私保护：敏感信息只保存在 Cloudflare Worker/D1，手机号和 ShowDoc token 加密保存。
 
 ## 项目结构
@@ -256,6 +256,10 @@ ShowDoc 通知按“服务端 POST 到用户提供的 webhook/API 地址”实�
 ```
 
 如果你的 ShowDoc 接口字段不同，只需要调整 `worker/src/index.js` 中的 `sendShowDoc`。
+
+## 微信通知
+
+第一版用企业微信群机器人 Webhook 作为微信生态通知通道。车主在绑定页或管理页填写企业微信群机器人地址后，访客页会出现“微信通知”按钮。Webhook 会加密保存在 D1，访客接口只返回 `wechat_work` 这个可用通道名，不会返回机器人地址或 key。
 
 ## 隐私号呼叫
 
