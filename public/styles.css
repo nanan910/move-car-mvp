@@ -215,6 +215,15 @@ button:disabled {
   width: 180px;
 }
 
+.small-qr {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: block;
+  height: 140px;
+  margin-top: 10px;
+  width: 140px;
+}
+
 .move-card {
   align-items: center;
   background: #ffffff;
