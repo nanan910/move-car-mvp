@@ -28,6 +28,18 @@ export function createMockServer() {
 }
 
 async function handleApi(req, res, url) {
+  if (req.method === "GET" && url.pathname === "/api/health") {
+    return sendJson(res, 200, {
+      status: "ok",
+      d1: true,
+      encryption: true,
+      tencentOcr: false,
+      tencentSms: false,
+      privacyCall: false,
+      mock: true,
+    });
+  }
+
   if (req.method === "POST" && url.pathname === "/api/ocr/plate") {
     await readBody(req);
     return sendJson(res, 200, {
