@@ -175,6 +175,19 @@ Response:
 
 This endpoint still must not echo raw phone numbers, ShowDoc webhook URLs, or ShowDoc tokens.
 
+## `POST /api/owner/:ownerToken/vehicle/regenerate-token`
+
+Rotates the public visitor `vehicleToken`. Old QR codes stop working immediately, and the owner page should display the newly generated visitor URL/QR code.
+
+Response:
+
+```json
+{
+  "vehicleToken": "veh_new",
+  "maskedPlate": "粤B***45"
+}
+```
+
 ## `PATCH /api/owner/:ownerToken/vehicle`
 
 Updates owner notification settings.
