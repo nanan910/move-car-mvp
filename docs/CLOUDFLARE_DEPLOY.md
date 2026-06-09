@@ -71,4 +71,12 @@ Cloudflare 配好后：
 3. 检查 Worker `/api/health`
 4. 确认 `D1`、`加密密钥`、`腾讯云 OCR` 等状态
 
-健康检查只返回布尔状态，不返回任何密钥。
+健康检查只返回布尔状态和缺失配置名，不返回任何密钥。正常生产状态应看到：
+
+- `status: ok`
+- `missing: []`
+- `d1: true`
+- `encryption: true`
+- `tencentOcr: true`
+
+如果 `status: degraded`，按 `missing` 列表继续补 Cloudflare binding 或 Worker secrets。
