@@ -118,6 +118,15 @@ async function main() {
     assert(!ownerText.includes("https://showdoc.example"), "owner response must not echo ShowDoc webhook");
     assert(!ownerText.includes("private-wechat-key"), "owner response must not echo WeCom webhook");
 
+    const regenerated = await call("POST", `/api/owner/${created.body.ownerToken}/vehicle/regenerate-token`, {});
+    assert(regenerated.status === 200, "regenerate vehicle token should return 200");
+    assert(regenerated.body.vehicleToken.startsWith("veh_"), "regenerate should return a vehicle token");
+    assert(regenerated.body.vehicleToken !== created.body.vehicleToken, "regenerate should rotate the public vehicle token");
+    const oldPublicVehicle = await call("GET", `/api/vehicles/${created.body.vehicleToken}/public`);
+    assert(oldPublicVehicle.status === 404, "old vehicle token should stop working after regeneration");
+    const newPublicVehicle = await call("GET", `/api/vehicles/${regenerated.body.vehicleToken}/public`);
+    assert(newPublicVehicle.status === 200, "new vehicle token should work after regeneration");
+
     const patch = await call("PATCH", `/api/owner/${created.body.ownerToken}/vehicle`, {
       smsEnabled: false,
       privacyCallEnabled: false,
