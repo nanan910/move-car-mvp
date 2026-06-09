@@ -197,6 +197,67 @@ button:disabled {
   width: 180px;
 }
 
+.move-card {
+  align-items: center;
+  background: #ffffff;
+  border: 2px solid var(--brand);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  max-width: 280px;
+  padding: 18px;
+  text-align: center;
+}
+
+.move-card img {
+  border: 0;
+  height: 180px;
+  width: 180px;
+}
+
+.move-card-kicker {
+  color: var(--brand);
+  font-size: 14px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.move-card small {
+  color: var(--muted);
+}
+
+@media print {
+  body {
+    background: #ffffff;
+  }
+
+  .topbar,
+  .intro,
+  form,
+  .form-note,
+  .qr > span,
+  .qr > strong,
+  .qr > button,
+  .qr > span:first-of-type {
+    display: none !important;
+  }
+
+  .shell,
+  .panel,
+  .result {
+    border: 0;
+    margin: 0;
+    max-width: none;
+    padding: 0;
+  }
+
+  .move-card {
+    break-inside: avoid;
+    margin: 24px auto;
+  }
+}
+
 @media (max-width: 720px) {
   .topbar {
     align-items: flex-start;
