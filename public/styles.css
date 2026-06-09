@@ -179,6 +179,19 @@ button:disabled {
   color: var(--danger);
 }
 
+.plate-preview {
+  aspect-ratio: 16 / 9;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: block;
+  margin-bottom: 10px;
+  max-height: 260px;
+  max-width: 100%;
+  object-fit: contain;
+  width: 100%;
+}
+
 .hidden {
   display: none;
 }
