@@ -7,6 +7,7 @@
 - 车主绑定页：上传车牌照片，服务端调用腾讯云车牌 OCR，确认车牌后创建绑定。
 - 车主管理页：通过 `ownerToken` 管理密钥链接更新通知配置、查看最近通知状态。
 - 访客挪车页：通过 `vehicleToken` 二维码打开，只显示脱敏车牌和可用通知按钮。
+- 部署检查页：打开 `setup.html` 查看 demo 模式、Worker 地址和 `/api/health` 状态。
 - 通知通道：ShowDoc webhook、腾讯云短信、隐私号呼叫适配器。
 - 隐私保护：敏感信息只保存在 Cloudflare Worker/D1，手机号和 ShowDoc token 加密保存。
 
@@ -210,6 +211,7 @@ ShowDoc 通知按“服务端 POST 到用户提供的 webhook/API 地址”实�
 
 - `npm run check` 通过语法检查。
 - GitHub Pages 能打开三个前端页面。
+- `setup.html` 能检查 Worker `/api/health`，且健康接口只返回配置布尔值，不泄露密钥。
 - Worker 的 `/api/ocr/plate` 能返回车牌识别候选。
 - 创建绑定后得到 `vehicleToken` 和 `ownerToken`。
 - 访客页接口只返回脱敏车牌和可用通知通道。
