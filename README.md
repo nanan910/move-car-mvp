@@ -17,6 +17,7 @@
 - 已提供 GitHub Actions workflow：Pages 可自动发布；Worker workflow 待 Cloudflare secrets 配置后启用。
 - 已通过 `preflight.ps1`、Mock MVP 验收和 Worker 隐私/限流验收。
 - 隐私与安全说明见 [docs/PRIVACY_AND_SECURITY.md](docs/PRIVACY_AND_SECURITY.md)。
+- Worker API 契约见 [docs/API.md](docs/API.md)。
 
 ## 功能
 
