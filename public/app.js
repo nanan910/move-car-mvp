@@ -67,6 +67,7 @@ async function demoRequest(path, options = {}) {
       ownerToken,
       maskedPlate: maskPlate(input.plateNumber),
       showdocEnabled: Boolean(input.showdocWebhook),
+      wechatWorkEnabled: Boolean(input.wechatWorkWebhook),
       smsEnabled: Boolean(input.smsEnabled && input.ownerPhone),
       privacyCallEnabled: Boolean(input.privacyCallEnabled && input.ownerPhone),
       createdAt: new Date().toISOString(),
@@ -123,6 +124,7 @@ async function demoRequest(path, options = {}) {
     if (method === "PATCH") {
       const input = JSON.parse(options.body || "{}");
       if (input.showdocWebhook) vehicle.showdocEnabled = true;
+      if (input.wechatWorkWebhook) vehicle.wechatWorkEnabled = true;
       if (typeof input.smsEnabled === "boolean") vehicle.smsEnabled = input.smsEnabled;
       if (typeof input.privacyCallEnabled === "boolean") vehicle.privacyCallEnabled = input.privacyCallEnabled;
       saveDemoState(state);
@@ -152,6 +154,7 @@ function findDemoVehicle(state, token, key) {
 function demoChannels(vehicle) {
   return [
     vehicle.showdocEnabled ? "showdoc" : "",
+    vehicle.wechatWorkEnabled ? "wechat_work" : "",
     vehicle.smsEnabled ? "sms" : "",
     vehicle.privacyCallEnabled ? "privacy_call" : "",
   ].filter(Boolean);
@@ -295,6 +298,9 @@ function setupBindPage() {
         plateNumber: validatePlateNumber(form.plateNumber.value),
         showdocWebhook: validateHttpUrl(form.showdocWebhook.value.trim(), "ShowDoc Webhook"),
         showdocToken: form.showdocToken.value.trim(),
+        wechatWorkWebhook: form.wechatWorkWebhook.value.trim()
+          ? validateHttpUrl(form.wechatWorkWebhook.value.trim(), "企业微信群机器人 Webhook")
+          : "",
         ownerPhone: validatePhone(form.ownerPhone.value, smsEnabled || privacyCallEnabled),
         smsEnabled,
         privacyCallEnabled,
@@ -370,7 +376,7 @@ function setupOwnerPage() {
     const token = tokenInput.value.trim();
     const form = event.currentTarget;
     const payload = {};
-    ["showdocWebhook", "showdocToken", "ownerPhone"].forEach((name) => {
+    ["showdocWebhook", "showdocToken", "wechatWorkWebhook", "ownerPhone"].forEach((name) => {
       const value = form[name].value.trim();
       if (value) payload[name] = value;
     });
@@ -381,6 +387,9 @@ function setupOwnerPage() {
     show(patchResult, "正在保存...");
     try {
       if (payload.showdocWebhook) payload.showdocWebhook = validateHttpUrl(payload.showdocWebhook, "ShowDoc Webhook");
+      if (payload.wechatWorkWebhook) {
+        payload.wechatWorkWebhook = validateHttpUrl(payload.wechatWorkWebhook, "企业微信群机器人 Webhook");
+      }
       if (payload.ownerPhone) payload.ownerPhone = validatePhone(payload.ownerPhone, smsEnabled || privacyCallEnabled);
       await request(`/api/owner/${encodeURIComponent(token)}/vehicle`, {
         method: "PATCH",
