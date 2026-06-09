@@ -173,6 +173,33 @@ function boolValue(form, name) {
   return value === "true";
 }
 
+function validatePlateNumber(value) {
+  const plate = String(value || "").trim().replace(/\s+/g, "").toUpperCase();
+  if (!/^[\u4e00-\u9fa5A-Z0-9]{5,10}$/.test(plate)) {
+    throw new Error("请填写有效车牌号，长度建议 5-10 位。");
+  }
+  return plate;
+}
+
+function validateHttpUrl(value, label) {
+  try {
+    const url = new URL(value);
+    if (!["http:", "https:"].includes(url.protocol)) throw new Error();
+    return url.toString();
+  } catch {
+    throw new Error(`${label} 必须是 http 或 https 地址。`);
+  }
+}
+
+function validatePhone(value, required) {
+  const phone = String(value || "").trim();
+  if (!phone && !required) return "";
+  if (!/^\+?\d[\d\s-]{6,19}$/.test(phone)) {
+    throw new Error("请填写有效手机号，或关闭短信/隐私号通知。");
+  }
+  return phone.replace(/[\s-]/g, "");
+}
+
 function moveUrl(vehicleToken) {
   const url = new URL("./move.html", location.href);
   url.searchParams.set("t", vehicleToken);
@@ -220,16 +247,18 @@ function setupBindPage() {
   bindForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
-    const payload = {
-      plateNumber: form.plateNumber.value.trim(),
-      showdocWebhook: form.showdocWebhook.value.trim(),
-      showdocToken: form.showdocToken.value.trim(),
-      ownerPhone: form.ownerPhone.value.trim(),
-      smsEnabled: boolValue(form, "smsEnabled"),
-      privacyCallEnabled: boolValue(form, "privacyCallEnabled"),
-    };
+    const smsEnabled = boolValue(form, "smsEnabled");
+    const privacyCallEnabled = boolValue(form, "privacyCallEnabled");
     show(bindResult, "正在创建绑定...");
     try {
+      const payload = {
+        plateNumber: validatePlateNumber(form.plateNumber.value),
+        showdocWebhook: validateHttpUrl(form.showdocWebhook.value.trim(), "ShowDoc Webhook"),
+        showdocToken: form.showdocToken.value.trim(),
+        ownerPhone: validatePhone(form.ownerPhone.value, smsEnabled || privacyCallEnabled),
+        smsEnabled,
+        privacyCallEnabled,
+      };
       const data = await request("/api/vehicles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -303,6 +332,8 @@ function setupOwnerPage() {
     if (privacyCallEnabled !== undefined) payload.privacyCallEnabled = privacyCallEnabled;
     show(patchResult, "正在保存...");
     try {
+      if (payload.showdocWebhook) payload.showdocWebhook = validateHttpUrl(payload.showdocWebhook, "ShowDoc Webhook");
+      if (payload.ownerPhone) payload.ownerPhone = validatePhone(payload.ownerPhone, smsEnabled || privacyCallEnabled);
       await request(`/api/owner/${encodeURIComponent(token)}/vehicle`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
