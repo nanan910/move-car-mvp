@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>扫码挪车 - 隐私说明</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body data-page="privacy">
+    <header class="topbar">
+      <a class="brand" href="./index.html">扫码挪车</a>
+      <nav>
+        <a href="./index.html">车主绑定</a>
+        <a href="./owner.html">车主管理</a>
+        <a href="./setup.html">部署检查</a>
+        <a href="./privacy.html">隐私说明</a>
+      </nav>
+    </header>
+
+    <main class="shell">
+      <section class="panel intro">
+        <p class="eyebrow">隐私优先</p>
+        <h1>访客只能发提醒，不能看到车主联系方式</h1>
+        <p>二维码只包含匿名车辆 token。手机号、ShowDoc token、通知配置和完整绑定资料只由服务端处理。</p>
+      </section>
+
+      <section class="panel">
+        <h2>访客能看到什么</h2>
+        <ul class="checklist">
+          <li>脱敏车牌，例如 `粤B***45`。</li>
+          <li>可用通知按钮，例如 ShowDoc、短信、隐私号呼叫。</li>
+          <li>通知发送结果和限流提示。</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>访客看不到什么</h2>
+        <ul class="checklist">
+          <li>车主手机号、微信号、ShowDoc webhook、ShowDoc token。</li>
+          <li>完整车牌号和车主绑定配置。</li>
+          <li>腾讯云密钥、短信模板参数、隐私号服务 token。</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>服务端如何保护数据</h2>
+        <ul class="checklist">
+          <li>手机号和 ShowDoc token 使用服务端密钥加密保存。</li>
+          <li>访客 IP 只用于哈希限流，不在前端返回。</li>
+          <li>通知接口对同一车辆和访客短时间重复提醒进行限制。</li>
+          <li>`/api/health` 只返回配置是否存在和缺失项名称，不返回任何密钥值。</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>演示模式说明</h2>
+        <p>
+          当前 GitHub Pages 默认启用浏览器 demo 模式。demo 数据只保存在当前浏览器的 localStorage，
+          不会真正发送 ShowDoc、短信或隐私号通知。接入 Cloudflare Worker 后，真实数据由 Worker 和 D1 处理。
+        </p>
+      </section>
+    </main>
+
+    <script src="./config.js"></script>
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
