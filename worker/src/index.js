@@ -99,13 +99,13 @@ async function handleCreateVehicle({ request, env }) {
   assertConfig(env, ["DB", "DATA_ENCRYPTION_KEY"]);
   const input = await readJson(request);
   const plateNumber = normalizePlate(input.plateNumber);
-  if (!plateNumber) return json({ error: "missing_plate", message: "请确认车牌号。" }, 400);
-  if (!input.showdocWebhook) return json({ error: "missing_showdoc", message: "请填写 ShowDoc Webhook。" }, 400);
+  const validationError = validateVehicleInput(input, { requireWebhook: true });
+  if (validationError) return json(validationError, 400);
 
   const vehicleToken = await token("veh");
   const ownerToken = await token("own");
   const now = nowIso();
-  const encryptedPhone = input.ownerPhone ? await encryptText(env, input.ownerPhone) : null;
+  const encryptedPhone = input.ownerPhone ? await encryptText(env, normalizePhone(input.ownerPhone)) : null;
   const encryptedShowdocToken = input.showdocToken ? await encryptText(env, input.showdocToken) : null;
 
   await env.DB.prepare(
@@ -121,7 +121,7 @@ async function handleCreateVehicle({ request, env }) {
       maskPlate(plateNumber),
       await sha256Hex(plateNumber),
       encryptedPhone,
-      input.showdocWebhook,
+      normalizeHttpUrl(input.showdocWebhook),
       encryptedShowdocToken,
       input.smsEnabled ? 1 : 0,
       input.privacyCallEnabled ? 1 : 0,
@@ -213,11 +213,13 @@ async function handlePatchOwnerVehicle({ request, env, params }) {
   const vehicle = await getVehicleByOwnerToken(env, params.ownerToken);
   if (!vehicle) return json({ error: "not_found", message: "管理链接无效。" }, 404);
   const input = await readJson(request);
+  const validationError = validateVehicleInput(input, { partial: true, hasStoredPhone: Boolean(vehicle.owner_phone_encrypted) });
+  if (validationError) return json(validationError, 400);
   const updates = [];
   const values = [];
   if (input.showdocWebhook) {
     updates.push("showdoc_webhook = ?");
-    values.push(input.showdocWebhook);
+    values.push(normalizeHttpUrl(input.showdocWebhook));
   }
   if (input.showdocToken) {
     updates.push("showdoc_token_encrypted = ?");
@@ -225,7 +227,7 @@ async function handlePatchOwnerVehicle({ request, env, params }) {
   }
   if (input.ownerPhone) {
     updates.push("owner_phone_encrypted = ?");
-    values.push(await encryptText(env, input.ownerPhone));
+    values.push(await encryptText(env, normalizePhone(input.ownerPhone)));
   }
   if (typeof input.smsEnabled === "boolean") {
     updates.push("sms_enabled = ?");
@@ -396,6 +398,46 @@ function nowIso() {
 
 function normalizePlate(value) {
   return String(value || "").trim().replace(/\s+/g, "").toUpperCase();
+}
+
+function normalizeHttpUrl(value) {
+  return new URL(String(value || "").trim()).toString();
+}
+
+function normalizePhone(value) {
+  return String(value || "").trim().replace(/[\s-]/g, "");
+}
+
+function validateVehicleInput(input, { requireWebhook = false, partial = false, hasStoredPhone = false } = {}) {
+  const plate = normalizePlate(input.plateNumber);
+  if (!partial && !/^[\u4e00-\u9fa5A-Z0-9]{5,10}$/.test(plate)) {
+    return { error: "invalid_plate", message: "请填写有效车牌号。" };
+  }
+  if (requireWebhook || input.showdocWebhook) {
+    if (!isHttpUrl(input.showdocWebhook)) {
+      return { error: "invalid_showdoc_webhook", message: "ShowDoc Webhook 必须是 http 或 https 地址。" };
+    }
+  }
+  const requiresPhone = Boolean(input.smsEnabled || input.privacyCallEnabled);
+  if ((requiresPhone && !hasStoredPhone) || input.ownerPhone) {
+    if (!isPhone(input.ownerPhone)) {
+      return { error: "invalid_phone", message: "请填写有效手机号，或关闭短信/隐私号通知。" };
+    }
+  }
+  return null;
+}
+
+function isHttpUrl(value) {
+  try {
+    const url = new URL(String(value || "").trim());
+    return ["http:", "https:"].includes(url.protocol);
+  } catch {
+    return false;
+  }
+}
+
+function isPhone(value) {
+  return /^\+?\d[\d\s-]{6,19}$/.test(String(value || "").trim());
 }
 
 function maskPlate(value) {
