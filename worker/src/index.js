@@ -18,6 +18,7 @@ export default {
 
 function matchRoute(method, pathname) {
   const routes = [
+    ["GET", /^\/api\/health$/, handleHealth],
     ["POST", /^\/api\/ocr\/plate$/, handlePlateOcr],
     ["POST", /^\/api\/vehicles$/, handleCreateVehicle],
     ["GET", /^\/api\/vehicles\/([^/]+)\/public$/, handlePublicVehicle, ["vehicleToken"]],
@@ -35,6 +36,23 @@ function matchRoute(method, pathname) {
     }
   }
   return null;
+}
+
+function handleHealth({ env }) {
+  return json({
+    status: "ok",
+    d1: Boolean(env.DB),
+    encryption: Boolean(env.DATA_ENCRYPTION_KEY),
+    tencentOcr: Boolean(env.TENCENT_SECRET_ID && env.TENCENT_SECRET_KEY),
+    tencentSms: Boolean(
+      env.TENCENT_SECRET_ID &&
+        env.TENCENT_SECRET_KEY &&
+        env.TENCENT_SMS_APP_ID &&
+        env.TENCENT_SMS_SIGN_NAME &&
+        env.TENCENT_SMS_TEMPLATE_ID
+    ),
+    privacyCall: Boolean(env.PRIVACY_CALL_WEBHOOK_URL),
+  });
 }
 
 function cors(response, env) {
