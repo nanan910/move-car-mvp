@@ -345,6 +345,8 @@ function setupOwnerPage() {
   const patchForm = document.querySelector("#ownerPatchForm");
   const status = document.querySelector("#ownerStatus");
   const patchResult = document.querySelector("#ownerPatchResult");
+  const regenerateButton = document.querySelector("#regenerateTokenButton");
+  const regenerateResult = document.querySelector("#regenerateResult");
 
   async function loadOwner() {
     const token = tokenInput.value.trim();
@@ -359,6 +361,7 @@ function setupOwnerPage() {
        短信：${data.smsEnabled ? "启用" : "停用"}，隐私号：${data.privacyCallEnabled ? "启用" : "停用"}<br>
        最近通知：${data.recentNotifications?.length || 0} 条`
     );
+    regenerateButton.disabled = false;
     return data;
   }
 
@@ -401,6 +404,34 @@ function setupOwnerPage() {
       await loadOwner();
     } catch (error) {
       show(patchResult, escapeHtml(error.message), true);
+    }
+  });
+
+  regenerateButton.addEventListener("click", async () => {
+    const token = tokenInput.value.trim();
+    if (!token) {
+      show(regenerateResult, "请先读取车辆配置。", true);
+      return;
+    }
+    show(regenerateResult, "正在重新生成访客二维码...");
+    try {
+      const data = await request(`/api/owner/${encodeURIComponent(token)}/vehicle/regenerate-token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const publicUrl = moveUrl(data.vehicleToken);
+      const qrUrl = qrImageUrl(publicUrl);
+      show(
+        regenerateResult,
+        `<strong>已重新生成</strong><br>
+         旧二维码将失效。<br>
+         新访客链接：<a href="${publicUrl}">${escapeHtml(publicUrl)}</a><br>
+         <img class="small-qr" src="${qrUrl}" alt="新挪车二维码" />`
+      );
+      await loadOwner();
+    } catch (error) {
+      show(regenerateResult, escapeHtml(error.message), true);
     }
   });
 
