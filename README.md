@@ -7,8 +7,8 @@
 - GitHub Pages：[https://nanan910.github.io/move-car-mvp/](https://nanan910.github.io/move-car-mvp/)
 - 部署检查页：[https://nanan910.github.io/move-car-mvp/setup.html](https://nanan910.github.io/move-car-mvp/setup.html)
 - 隐私说明页：[https://nanan910.github.io/move-car-mvp/privacy.html](https://nanan910.github.io/move-car-mvp/privacy.html)
-- 当前线上版本默认启用浏览器 demo 模式，可以演示车牌识别、车辆绑定、二维码、访客通知和车主管理。
-- 真实 ShowDoc/短信/隐私号通知需要完成 Cloudflare Worker、D1、腾讯云和通知密钥配置后再启用。
+- 当前线上版本已指向 Cloudflare Worker：`https://move-car-api.nanan910-move-car.workers.dev`。
+- D1、Worker、加密密钥和 IP 哈希盐已配置；腾讯云 OCR 需要设置 `TENCENT_SECRET_ID` / `TENCENT_SECRET_KEY` 后才会从 `degraded` 变为 `ok`。
 
 ## 当前状态
 
@@ -50,9 +50,9 @@ npm run serve:public
 
 然后打开 `http://localhost:4173`。页面中的 API 地址填写已部署的 Cloudflare Worker 地址。
 
-线上 GitHub Pages 默认启用浏览器内 demo 模式：`public/config.js` 中 `MOVE_CAR_DEMO_MODE = true`。这可以在没有 Cloudflare Worker 的情况下演示 OCR、绑定、二维码、访客通知和车主管理。demo 数据只保存在当前浏览器的 `localStorage`，不会真正发送 ShowDoc/短信/隐私号通知。
+线上 GitHub Pages 默认指向真实 Cloudflare Worker：`public/config.js` 中 `MOVE_CAR_DEMO_MODE = false`。如果需要临时回到浏览器内 demo 模式，可以把 API 地址置空并改为 `MOVE_CAR_DEMO_MODE = true`。demo 数据只保存在当前浏览器的 `localStorage`，不会真正发送 ShowDoc/短信/隐私号通知。
 
-接入真实 Worker 后，把 `public/config.js` 改为：
+接入其他 Worker 后，把 `public/config.js` 改为：
 
 ```js
 window.MOVE_CAR_API_BASE = "https://move-car-api.your-subdomain.workers.dev";
