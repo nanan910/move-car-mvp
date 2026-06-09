@@ -213,6 +213,7 @@ git push -u origin main
 | `TENCENT_SECRET_ID` | OCR 必填 | 腾讯云 SecretId |
 | `TENCENT_SECRET_KEY` | OCR 必填 | 腾讯云 SecretKey |
 | `TENCENT_OCR_REGION` | 否 | 默认 `ap-guangzhou` |
+| `MAX_OCR_IMAGE_BYTES` | 否 | 车牌 OCR 上传图片大小上限，默认 `4194304` |
 | `TENCENT_SMS_APP_ID` | 短信必填 | 腾讯云短信应用 ID |
 | `TENCENT_SMS_SIGN_NAME` | 短信必填 | 腾讯云短信签名 |
 | `TENCENT_SMS_TEMPLATE_ID` | 短信必填 | 腾讯云短信模板 ID |
