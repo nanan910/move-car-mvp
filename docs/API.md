@@ -93,7 +93,9 @@ Response:
 Validation:
 
 - `plateNumber`: 5-10 Chinese/letter/digit characters
-- `showdocWebhook`: `http` or `https` URL
+- At least one notification channel: `showdocWebhook`, `wechatWorkWebhook`, SMS, or privacy-call
+- `showdocWebhook`: optional `http` or `https` URL
+- `wechatWorkWebhook`: optional `http` or `https` URL
 - `ownerPhone`: required when SMS or privacy-call is enabled
 
 Required config:
