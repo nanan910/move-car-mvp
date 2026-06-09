@@ -32,6 +32,22 @@ async function main() {
     assert(badOcr.status === 400, "invalid OCR upload should return 400");
     assert(badOcr.body.error === "invalid_image_type", "invalid OCR upload should return a typed error");
 
+    const demoEnv = env;
+    env = { ...env, OCR_DEMO_MODE: "true", OCR_DEMO_PLATE: "粤B54321" };
+    const demoOcrForm = new FormData();
+    demoOcrForm.set("image", new Blob(["fake image bytes"], { type: "image/jpeg" }), "plate.jpg");
+    const demoOcr = await callRequest(
+      new Request("https://api.example.test/api/ocr/plate", {
+        method: "POST",
+        headers: new Headers({ "CF-Connecting-IP": "203.0.113.8" }),
+        body: demoOcrForm,
+      })
+    );
+    assert(demoOcr.status === 200, "OCR demo mode should return 200 without Tencent secrets");
+    assert(demoOcr.body.demo === true, "OCR demo response should be marked as demo");
+    assert(demoOcr.body.plateNumber === "粤B54321", "OCR demo should return configured demo plate");
+    env = demoEnv;
+
     const invalidWebhook = await call("POST", "/api/vehicles", {
       plateNumber: "粤B12345",
       showdocWebhook: "ftp://showdoc.example/webhook",
