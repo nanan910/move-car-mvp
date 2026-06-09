@@ -88,7 +88,8 @@ async function demoRequest(path, options = {}) {
     const vehicle = findDemoVehicle(state, match[1], "vehicleToken");
     if (!vehicle) throw new Error("车辆不存在。");
     const input = JSON.parse(options.body || "{}");
-    const channel = input.channel || "showdoc";
+    const channels = demoChannels(vehicle);
+    const channel = input.channel || ["wechat_work", "showdoc", "sms", "privacy_call"].find((item) => channels.includes(item));
     if (!demoChannels(vehicle).includes(channel)) throw new Error("该通知方式尚未配置。");
     const recent = state.logs.find(
       (log) => log.vehicleToken === vehicle.vehicleToken && Date.now() - log.time < 120000
@@ -411,19 +412,37 @@ function setupMovePage() {
   const result = document.querySelector("#notifyResult");
   const vehicle = document.querySelector("#publicVehicle");
   const buttons = document.querySelectorAll("[data-channel]");
+  const autoButton = document.querySelector("[data-auto-notify]");
+  let availableChannels = [];
 
   async function loadPublic() {
     if (!token) throw new Error("二维码缺少车辆 token。");
     const data = await request(`/api/vehicles/${encodeURIComponent(token)}/public`);
+    availableChannels = data.availableChannels || [];
     show(
       vehicle,
       `<strong>${escapeHtml(data.maskedPlate)}</strong><br>
-       可用通知：${data.availableChannels.map(escapeHtml).join("、") || "暂无"}`
+       可用通知：${availableChannels.map(escapeHtml).join("、") || "暂无"}`
     );
+    autoButton.disabled = !availableChannels.length;
     buttons.forEach((button) => {
-      button.disabled = !data.availableChannels.includes(button.dataset.channel);
+      button.disabled = !availableChannels.includes(button.dataset.channel);
     });
   }
+
+  autoButton.addEventListener("click", async () => {
+    show(result, "正在发送提醒...");
+    try {
+      const data = await request(`/api/vehicles/${encodeURIComponent(token)}/notify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      show(result, escapeHtml(data.message || "已通知车主。"));
+    } catch (error) {
+      show(result, escapeHtml(error.message), true);
+    }
+  });
 
   buttons.forEach((button) => {
     button.addEventListener("click", async () => {
