@@ -20,6 +20,18 @@ async function main() {
     assert(health.body.missing.length === 2, "health should report missing Tencent OCR config in test env");
     assert(!healthText.includes("test-encryption-key"), "health must not leak secrets");
 
+    const badOcrForm = new FormData();
+    badOcrForm.set("image", new Blob(["not a plate image"], { type: "text/plain" }), "plate.txt");
+    const badOcr = await callRequest(
+      new Request("https://api.example.test/api/ocr/plate", {
+        method: "POST",
+        headers: new Headers({ "CF-Connecting-IP": "203.0.113.8" }),
+        body: badOcrForm,
+      })
+    );
+    assert(badOcr.status === 400, "invalid OCR upload should return 400");
+    assert(badOcr.body.error === "invalid_image_type", "invalid OCR upload should return a typed error");
+
     const invalidWebhook = await call("POST", "/api/vehicles", {
       plateNumber: "粤B12345",
       showdocWebhook: "ftp://showdoc.example/webhook",
@@ -113,6 +125,10 @@ async function call(method, path, body) {
     requestBody = JSON.stringify(body);
   }
   const request = new Request(`https://api.example.test${path}`, { method, headers, body: requestBody });
+  return callRequest(request);
+}
+
+async function callRequest(request) {
   const response = await worker.fetch(request, env);
   return { status: response.status, body: await response.json() };
 }
