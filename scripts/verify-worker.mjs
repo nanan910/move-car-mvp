@@ -55,6 +55,12 @@ async function main() {
     assert(invalidWebhook.status === 400, "invalid webhook should return 400");
     assert(invalidWebhook.body.error === "invalid_showdoc_webhook", "invalid webhook should return a typed error");
 
+    const missingChannel = await call("POST", "/api/vehicles", {
+      plateNumber: "粤B12345",
+    });
+    assert(missingChannel.status === 400, "vehicle without notification channel should return 400");
+    assert(missingChannel.body.error === "missing_notification_channel", "missing channel should return a typed error");
+
     const missingPhone = await call("POST", "/api/vehicles", {
       plateNumber: "粤B12345",
       showdocWebhook: "https://showdoc.example/webhook",
@@ -86,7 +92,6 @@ async function main() {
 
     const wechatVehicle = await call("POST", "/api/vehicles", {
       plateNumber: "粤B54321",
-      showdocWebhook: "https://showdoc.example/webhook",
       wechatWorkWebhook: "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=private-wechat-key",
     });
     assert(wechatVehicle.status === 201, "create vehicle with WeCom webhook should return 201");
