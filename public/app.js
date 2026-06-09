@@ -266,14 +266,22 @@ function setupBindPage() {
       });
       const publicUrl = moveUrl(data.vehicleToken);
       const manageUrl = ownerUrl(data.ownerToken);
+      const qrUrl = qrImageUrl(publicUrl);
       show(
         bindResult,
         `<div class="qr">
           <strong>绑定成功</strong>
           ${data.demo ? "<span>当前为浏览器演示模式：二维码链接只在本浏览器保存了车辆数据。</span>" : ""}
-          <img src="${qrImageUrl(publicUrl)}" alt="挪车二维码" />
+          <div class="move-card" id="moveCard">
+            <p class="move-card-kicker">扫码挪车</p>
+            <img src="${qrUrl}" alt="挪车二维码" />
+            <strong>${escapeHtml(data.maskedPlate || maskPlate(payload.plateNumber))}</strong>
+            <span>请扫码通知车主挪车</span>
+            <small>不显示手机号 · 不暴露车主信息</small>
+          </div>
           <span>访客二维码链接：<a href="${publicUrl}">${escapeHtml(publicUrl)}</a></span>
           <span>车主管理链接：<a href="${manageUrl}">${escapeHtml(manageUrl)}</a></span>
+          <button type="button" onclick="window.print()">打印挪车卡片</button>
         </div>`
       );
     } catch (error) {
