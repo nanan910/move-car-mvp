@@ -168,6 +168,12 @@ button:disabled {
   padding-left: 22px;
 }
 
+.form-note {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 12px;
+}
+
 .result.error {
   border-color: #fecdca;
   color: var(--danger);
