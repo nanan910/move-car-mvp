@@ -83,6 +83,12 @@ Windows PowerShell 也可以直接运行：
 
 详细步骤见 [docs/CLOUDFLARE_DEPLOY.md](docs/CLOUDFLARE_DEPLOY.md)。
 
+Worker 运行时密钥可用交互脚本配置：
+
+```powershell
+.\scripts\set-worker-secrets.ps1
+```
+
 1. 安装依赖：
 
 ```bash
