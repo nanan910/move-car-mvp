@@ -2,6 +2,8 @@ const params = new URLSearchParams(location.search);
 const page = document.body.dataset.page;
 
 const DEFAULT_API_BASE = localStorage.getItem("moveCarApiBase") || window.MOVE_CAR_API_BASE || "";
+const DEMO_MODE = Boolean(window.MOVE_CAR_DEMO_MODE);
+const DEMO_STORAGE_KEY = "moveCarDemoState";
 
 function apiBase() {
   const input = document.querySelector("#apiBase");
@@ -32,11 +34,137 @@ function escapeHtml(value) {
 
 async function request(path, options = {}) {
   const base = apiBase();
+  if (!base && DEMO_MODE) return demoRequest(path, options);
   if (!base) throw new Error("请先填写 Cloudflare Worker API 地址。");
   const res = await fetch(`${base}${path}`, options);
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.message || data.error || `请求失败：${res.status}`);
   return data;
+}
+
+async function demoRequest(path, options = {}) {
+  await new Promise((resolve) => setTimeout(resolve, 180));
+  const method = options.method || "GET";
+  const state = loadDemoState();
+
+  if (method === "POST" && path === "/api/ocr/plate") {
+    return {
+      plateNumber: "粤B12345",
+      candidates: [{ plateNumber: "粤B12345", color: "blue" }],
+      demo: true,
+    };
+  }
+
+  if (method === "POST" && path === "/api/vehicles") {
+    const input = JSON.parse(options.body || "{}");
+    if (!input.plateNumber) throw new Error("请确认车牌号。");
+    if (!input.showdocWebhook) throw new Error("请填写 ShowDoc Webhook。");
+    const vehicleToken = demoToken("veh");
+    const ownerToken = demoToken("own");
+    state.vehicles.push({
+      vehicleToken,
+      ownerToken,
+      maskedPlate: maskPlate(input.plateNumber),
+      showdocEnabled: Boolean(input.showdocWebhook),
+      smsEnabled: Boolean(input.smsEnabled && input.ownerPhone),
+      privacyCallEnabled: Boolean(input.privacyCallEnabled && input.ownerPhone),
+      createdAt: new Date().toISOString(),
+    });
+    saveDemoState(state);
+    return { vehicleToken, ownerToken, maskedPlate: maskPlate(input.plateNumber), demo: true };
+  }
+
+  let match = path.match(/^\/api\/vehicles\/([^/]+)\/public$/);
+  if (method === "GET" && match) {
+    const vehicle = findDemoVehicle(state, match[1], "vehicleToken");
+    if (!vehicle) throw new Error("车辆不存在。演示模式数据只保存在当前浏览器。");
+    return { maskedPlate: vehicle.maskedPlate, availableChannels: demoChannels(vehicle), demo: true };
+  }
+
+  match = path.match(/^\/api\/vehicles\/([^/]+)\/notify$/);
+  if (method === "POST" && match) {
+    const vehicle = findDemoVehicle(state, match[1], "vehicleToken");
+    if (!vehicle) throw new Error("车辆不存在。");
+    const input = JSON.parse(options.body || "{}");
+    const channel = input.channel || "showdoc";
+    if (!demoChannels(vehicle).includes(channel)) throw new Error("该通知方式尚未配置。");
+    const recent = state.logs.find(
+      (log) => log.vehicleToken === vehicle.vehicleToken && Date.now() - log.time < 120000
+    );
+    if (recent) throw new Error("已提醒车主，请勿频繁操作。");
+    state.logs.push({
+      vehicleToken: vehicle.vehicleToken,
+      channel,
+      status: "sent",
+      time: Date.now(),
+    });
+    saveDemoState(state);
+    return { message: `演示模式：已模拟发送 ${channel} 通知。`, demo: true };
+  }
+
+  match = path.match(/^\/api\/owner\/([^/]+)\/vehicle$/);
+  if (match) {
+    const vehicle = findDemoVehicle(state, match[1], "ownerToken");
+    if (!vehicle) throw new Error("管理链接无效。");
+    if (method === "GET") {
+      return {
+        vehicleToken: vehicle.vehicleToken,
+        maskedPlate: vehicle.maskedPlate,
+        showdocEnabled: vehicle.showdocEnabled,
+        smsEnabled: vehicle.smsEnabled,
+        privacyCallEnabled: vehicle.privacyCallEnabled,
+        recentNotifications: state.logs
+          .filter((log) => log.vehicleToken === vehicle.vehicleToken)
+          .map((log) => ({ channel: log.channel, status: log.status, created_at: new Date(log.time).toISOString() })),
+        demo: true,
+      };
+    }
+    if (method === "PATCH") {
+      const input = JSON.parse(options.body || "{}");
+      if (input.showdocWebhook) vehicle.showdocEnabled = true;
+      if (typeof input.smsEnabled === "boolean") vehicle.smsEnabled = input.smsEnabled;
+      if (typeof input.privacyCallEnabled === "boolean") vehicle.privacyCallEnabled = input.privacyCallEnabled;
+      saveDemoState(state);
+      return { message: "演示模式：配置已更新。", demo: true };
+    }
+  }
+
+  throw new Error("演示模式暂不支持该接口。");
+}
+
+function loadDemoState() {
+  try {
+    return JSON.parse(localStorage.getItem(DEMO_STORAGE_KEY)) || { vehicles: [], logs: [] };
+  } catch {
+    return { vehicles: [], logs: [] };
+  }
+}
+
+function saveDemoState(state) {
+  localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(state));
+}
+
+function findDemoVehicle(state, token, key) {
+  return state.vehicles.find((vehicle) => vehicle[key] === decodeURIComponent(token));
+}
+
+function demoChannels(vehicle) {
+  return [
+    vehicle.showdocEnabled ? "showdoc" : "",
+    vehicle.smsEnabled ? "sms" : "",
+    vehicle.privacyCallEnabled ? "privacy_call" : "",
+  ].filter(Boolean);
+}
+
+function demoToken(prefix) {
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  return `${prefix}_${btoa(String.fromCharCode(...bytes)).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "")}`;
+}
+
+function maskPlate(value) {
+  const plate = String(value || "").trim().replace(/\s+/g, "").toUpperCase();
+  if (plate.length <= 3) return "***";
+  return `${plate.slice(0, 2)}***${plate.slice(-2)}`;
 }
 
 function boolValue(form, name) {
@@ -113,6 +241,7 @@ function setupBindPage() {
         bindResult,
         `<div class="qr">
           <strong>绑定成功</strong>
+          ${data.demo ? "<span>当前为浏览器演示模式：二维码链接只在本浏览器保存了车辆数据。</span>" : ""}
           <img src="${qrImageUrl(publicUrl)}" alt="挪车二维码" />
           <span>访客二维码链接：<a href="${publicUrl}">${escapeHtml(publicUrl)}</a></span>
           <span>车主管理链接：<a href="${manageUrl}">${escapeHtml(manageUrl)}</a></span>
