@@ -45,7 +45,7 @@
         <form id="ownerPatchForm" class="grid-form">
           <label>
             ShowDoc Webhook
-            <input id="showdocWebhook" name="showdocWebhook" placeholder="留空则不修改" />
+            <input id="showdocWebhook" name="showdocWebhook" placeholder="留空则不修改" inputmode="url" />
           </label>
           <label>
             ShowDoc Token
@@ -73,6 +73,7 @@
           </label>
           <button type="submit">保存更新</button>
         </form>
+        <p class="form-note">更新后的手机号和 ShowDoc token 仍只保存在服务端，不会返回给访客页面。</p>
         <div id="ownerPatchResult" class="result hidden"></div>
       </section>
     </main>
