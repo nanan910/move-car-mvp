@@ -150,6 +150,11 @@ button:disabled {
   margin-top: 18px;
 }
 
+.primary-action {
+  margin-top: 18px;
+  width: 100%;
+}
+
 .result {
   background: #f8fafc;
   border: 1px solid var(--line);
