@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>扫码挪车 - 车主绑定</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body data-page="bind">
+    <header class="topbar">
+      <a class="brand" href="./index.html">扫码挪车</a>
+      <nav>
+        <a href="./index.html">车主绑定</a>
+        <a href="./owner.html">车主管理</a>
+      </nav>
+    </header>
+
+    <main class="shell">
+      <section class="panel intro">
+        <p class="eyebrow">匿名通知 · 隐私保护 · GitHub Pages + Cloudflare</p>
+        <h1>上传车牌照片，生成专属挪车二维码</h1>
+        <p>
+          访客扫码后只能发送提醒，不能看到你的手机号、微信、ShowDoc 配置或完整绑定资料。
+        </p>
+      </section>
+
+      <section class="panel">
+        <h2>1. 识别车牌</h2>
+        <form id="ocrForm" class="stack">
+          <label>
+            API 地址
+            <input id="apiBase" name="apiBase" placeholder="https://your-worker.example.workers.dev" />
+          </label>
+          <label>
+            车牌照片
+            <input id="plateImage" name="plateImage" type="file" accept="image/*" required />
+          </label>
+          <button type="submit">上传并识别</button>
+        </form>
+        <div id="ocrResult" class="result hidden"></div>
+      </section>
+
+      <section class="panel">
+        <h2>2. 绑定通知配置</h2>
+        <form id="bindForm" class="grid-form">
+          <label>
+            确认车牌
+            <input id="plateNumber" name="plateNumber" placeholder="例如 粤B12345" required />
+          </label>
+          <label>
+            ShowDoc Webhook
+            <input id="showdocWebhook" name="showdocWebhook" placeholder="https://..." required />
+          </label>
+          <label>
+            ShowDoc Token
+            <input id="showdocToken" name="showdocToken" type="password" placeholder="可选" />
+          </label>
+          <label>
+            车主手机号
+            <input id="ownerPhone" name="ownerPhone" inputmode="tel" placeholder="仅服务端加密保存" />
+          </label>
+          <label>
+            短信通知
+            <select id="smsEnabled" name="smsEnabled">
+              <option value="false">暂不启用</option>
+              <option value="true">启用</option>
+            </select>
+          </label>
+          <label>
+            隐私号呼叫
+            <select id="privacyCallEnabled" name="privacyCallEnabled">
+              <option value="false">暂不启用</option>
+              <option value="true">启用</option>
+            </select>
+          </label>
+          <button type="submit">创建绑定并生成二维码</button>
+        </form>
+        <div id="bindResult" class="result hidden"></div>
+      </section>
+    </main>
+
+    <script src="./config.js"></script>
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
