@@ -1,0 +1,17 @@
+{
+  "name": "move-car-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check public/app.js && node --check public/config.js && node --check worker/src/index.js && node --check scripts/serve-public.mjs && node --check scripts/mock-api.mjs && node --check scripts/verify-mvp.mjs && node --check scripts/verify-worker.mjs",
+    "serve:public": "node scripts/serve-public.mjs",
+    "serve:mock": "node scripts/mock-api.mjs",
+    "verify:mvp": "node scripts/verify-mvp.mjs",
+    "verify:worker": "node scripts/verify-worker.mjs",
+    "preflight": "node scripts/verify-mvp.mjs && node scripts/verify-worker.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
