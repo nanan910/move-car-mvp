@@ -57,7 +57,7 @@ npm install
 npx wrangler deploy --config worker/wrangler.toml
 ```
 
-正式上线前请删除或改回该 secret，并配置真实腾讯云 OCR 密钥。
+配置真实腾讯云 OCR 密钥后，Worker 会自动优先使用腾讯云 OCR；正式上线仍建议删除或改回 `OCR_DEMO_MODE`，避免运维判断混淆。
 
 ```powershell
 npm install
