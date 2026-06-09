@@ -36,6 +36,7 @@ async function handleApi(req, res, url) {
       tencentOcr: false,
       tencentSms: false,
       privacyCall: false,
+      missing: [],
       mock: true,
     });
   }
