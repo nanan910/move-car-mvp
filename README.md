@@ -93,6 +93,18 @@ Worker 运行时密钥可用交互脚本配置：
 .\scripts\set-worker-secrets.ps1
 ```
 
+如果只需要补腾讯云车牌 OCR 密钥，可运行更短的脚本：
+
+```powershell
+.\scripts\set-ocr-secrets.ps1 -Deploy
+```
+
+生产部署后可运行：
+
+```powershell
+.\scripts\check-production.ps1
+```
+
 1. 安装依赖：
 
 ```bash
