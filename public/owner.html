@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>扫码挪车 - 车主管理</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body data-page="owner">
+    <header class="topbar">
+      <a class="brand" href="./index.html">扫码挪车</a>
+      <nav>
+        <a href="./index.html">车主绑定</a>
+        <a href="./owner.html">车主管理</a>
+      </nav>
+    </header>
+
+    <main class="shell">
+      <section class="panel intro">
+        <p class="eyebrow">车主专属链接</p>
+        <h1>管理车辆通知配置</h1>
+        <p>使用绑定完成后生成的 ownerToken 链接打开此页，更新通知配置或复制挪车二维码链接。</p>
+      </section>
+
+      <section class="panel">
+        <h2>车辆状态</h2>
+        <form id="ownerLoadForm" class="stack">
+          <label>
+            API 地址
+            <input id="apiBase" name="apiBase" placeholder="https://your-worker.example.workers.dev" />
+          </label>
+          <label>
+            ownerToken
+            <input id="ownerToken" name="ownerToken" placeholder="从管理链接中自动读取，也可手动粘贴" required />
+          </label>
+          <button type="submit">读取车辆配置</button>
+        </form>
+        <div id="ownerStatus" class="result hidden"></div>
+      </section>
+
+      <section class="panel">
+        <h2>更新配置</h2>
+        <form id="ownerPatchForm" class="grid-form">
+          <label>
+            ShowDoc Webhook
+            <input id="showdocWebhook" name="showdocWebhook" placeholder="留空则不修改" />
+          </label>
+          <label>
+            ShowDoc Token
+            <input id="showdocToken" name="showdocToken" type="password" placeholder="留空则不修改" />
+          </label>
+          <label>
+            车主手机号
+            <input id="ownerPhone" name="ownerPhone" inputmode="tel" placeholder="留空则不修改" />
+          </label>
+          <label>
+            短信通知
+            <select id="smsEnabled" name="smsEnabled">
+              <option value="">不修改</option>
+              <option value="true">启用</option>
+              <option value="false">停用</option>
+            </select>
+          </label>
+          <label>
+            隐私号呼叫
+            <select id="privacyCallEnabled" name="privacyCallEnabled">
+              <option value="">不修改</option>
+              <option value="true">启用</option>
+              <option value="false">停用</option>
+            </select>
+          </label>
+          <button type="submit">保存更新</button>
+        </form>
+        <div id="ownerPatchResult" class="result hidden"></div>
+      </section>
+    </main>
+
+    <script src="./config.js"></script>
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
