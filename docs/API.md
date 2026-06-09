@@ -73,6 +73,7 @@ Request:
   "plateNumber": "粤B12345",
   "showdocWebhook": "https://example.com/showdoc-webhook",
   "showdocToken": "optional-token",
+  "wechatWorkWebhook": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx",
   "ownerPhone": "13800138000",
   "smsEnabled": false,
   "privacyCallEnabled": false
@@ -135,6 +136,7 @@ Request:
 
 Valid channels:
 
+- `wechat_work`
 - `showdoc`
 - `sms`
 - `privacy_call`
