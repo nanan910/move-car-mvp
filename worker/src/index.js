@@ -49,8 +49,8 @@ function handleHealth({ env }) {
     status: missing.length ? "degraded" : "ok",
     d1: Boolean(env.DB),
     encryption: Boolean(env.DATA_ENCRYPTION_KEY),
-    ocrDemo: isOcrDemo(env),
-    tencentOcr: Boolean(env.TENCENT_SECRET_ID && env.TENCENT_SECRET_KEY),
+    ocrDemo: usesOcrDemo(env),
+    tencentOcr: hasTencentOcr(env),
     tencentSms: Boolean(
       env.TENCENT_SECRET_ID &&
         env.TENCENT_SECRET_KEY &&
@@ -80,7 +80,7 @@ async function handlePlateOcr({ request, env }) {
   const image = form.get("image");
   const imageError = validateOcrImage(image, env);
   if (imageError) return json(imageError, 400);
-  if (isOcrDemo(env)) {
+  if (usesOcrDemo(env)) {
     return json({
       plateNumber: env.OCR_DEMO_PLATE || "粤B12345",
       candidates: [{ plateNumber: env.OCR_DEMO_PLATE || "粤B12345", color: "demo" }],
@@ -108,6 +108,14 @@ async function handlePlateOcr({ request, env }) {
 
 function isOcrDemo(env) {
   return String(env.OCR_DEMO_MODE || "").toLowerCase() === "true";
+}
+
+function hasTencentOcr(env) {
+  return Boolean(env.TENCENT_SECRET_ID && env.TENCENT_SECRET_KEY);
+}
+
+function usesOcrDemo(env) {
+  return isOcrDemo(env) && !hasTencentOcr(env);
 }
 
 function validateOcrImage(image, env) {
@@ -441,8 +449,8 @@ function requiredConfig(env) {
   return [
     { name: "DB", ok: Boolean(env.DB) },
     { name: "DATA_ENCRYPTION_KEY", ok: Boolean(env.DATA_ENCRYPTION_KEY) },
-    { name: "TENCENT_SECRET_ID", ok: Boolean(env.TENCENT_SECRET_ID) },
-    { name: "TENCENT_SECRET_KEY", ok: Boolean(env.TENCENT_SECRET_KEY) },
+    { name: "TENCENT_SECRET_ID", ok: usesOcrDemo(env) || Boolean(env.TENCENT_SECRET_ID) },
+    { name: "TENCENT_SECRET_KEY", ok: usesOcrDemo(env) || Boolean(env.TENCENT_SECRET_KEY) },
   ];
 }
 
