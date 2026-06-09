@@ -62,6 +62,7 @@ $powerShellScripts = @(
   "scripts/configure-cloudflare.ps1",
   "scripts/set-worker-secrets.ps1",
   "scripts/set-ocr-secrets.ps1",
+  "scripts/promote-production.ps1",
   "scripts/check-production.ps1"
 )
 foreach ($script in $powerShellScripts) {
