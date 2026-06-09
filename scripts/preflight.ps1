@@ -10,6 +10,17 @@ function Write-Step {
   Write-Host "==> $Message"
 }
 
+function Invoke-Checked {
+  param(
+    [string]$FilePath,
+    [string[]]$Arguments
+  )
+  & $FilePath @Arguments
+  if ($LASTEXITCODE -ne 0) {
+    throw "Command failed: $FilePath $($Arguments -join ' ')"
+  }
+}
+
 Write-Step "Checking required project files"
 $required = @(
   "public/index.html",
@@ -32,19 +43,19 @@ foreach ($path in $required) {
 }
 
 Write-Step "Running JavaScript syntax checks"
-& $NodePath --check public/app.js
-& $NodePath --check public/config.js
-& $NodePath --check worker/src/index.js
-& $NodePath --check scripts/serve-public.mjs
-& $NodePath --check scripts/mock-api.mjs
-& $NodePath --check scripts/verify-mvp.mjs
-& $NodePath --check scripts/verify-worker.mjs
+Invoke-Checked $NodePath @("--check", "public/app.js")
+Invoke-Checked $NodePath @("--check", "public/config.js")
+Invoke-Checked $NodePath @("--check", "worker/src/index.js")
+Invoke-Checked $NodePath @("--check", "scripts/serve-public.mjs")
+Invoke-Checked $NodePath @("--check", "scripts/mock-api.mjs")
+Invoke-Checked $NodePath @("--check", "scripts/verify-mvp.mjs")
+Invoke-Checked $NodePath @("--check", "scripts/verify-worker.mjs")
 
 Write-Step "Running MVP verification"
-& $NodePath scripts/verify-mvp.mjs
+Invoke-Checked $NodePath @("scripts/verify-mvp.mjs")
 
 Write-Step "Running Worker privacy/rate-limit verification"
-& $NodePath scripts/verify-worker.mjs
+Invoke-Checked $NodePath @("scripts/verify-worker.mjs")
 
 Write-Step "Checking deployment placeholders"
 $wrangler = Get-Content worker/wrangler.toml -Raw
