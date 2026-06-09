@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>扫码挪车 - 通知车主</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body data-page="move">
+    <header class="topbar">
+      <a class="brand" href="./index.html">扫码挪车</a>
+    </header>
+
+    <main class="shell compact">
+      <section class="panel intro">
+        <p class="eyebrow">匿名挪车提醒</p>
+        <h1>需要车主挪车？</h1>
+        <p>你可以一键发送提醒。系统不会向你展示车主手机号、微信或其他隐私信息。</p>
+      </section>
+
+      <section class="panel">
+        <h2>车辆信息</h2>
+        <div id="publicVehicle" class="result">正在读取二维码信息...</div>
+        <div class="actions">
+          <button data-channel="showdoc">ShowDoc 通知</button>
+          <button data-channel="sms">短信提醒</button>
+          <button data-channel="privacy_call">隐私号呼叫</button>
+        </div>
+        <div id="notifyResult" class="result hidden"></div>
+      </section>
+    </main>
+
+    <script src="./config.js"></script>
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
