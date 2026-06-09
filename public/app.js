@@ -59,7 +59,7 @@ async function demoRequest(path, options = {}) {
   if (method === "POST" && path === "/api/vehicles") {
     const input = JSON.parse(options.body || "{}");
     if (!input.plateNumber) throw new Error("请确认车牌号。");
-    if (!input.showdocWebhook) throw new Error("请填写 ShowDoc Webhook。");
+    if (!hasNotificationChannel(input)) throw new Error("请至少配置一种通知方式。");
     const vehicleToken = demoToken("veh");
     const ownerToken = demoToken("own");
     state.vehicles.push({
@@ -205,6 +205,10 @@ function validatePhone(value, required) {
   return phone.replace(/[\s-]/g, "");
 }
 
+function hasNotificationChannel(payload) {
+  return Boolean(payload.showdocWebhook || payload.wechatWorkWebhook || payload.smsEnabled || payload.privacyCallEnabled);
+}
+
 function validateImageFile(file) {
   if (!file) throw new Error("请先选择车牌照片。");
   if (file.type && !file.type.startsWith("image/")) {
@@ -297,7 +301,9 @@ function setupBindPage() {
     try {
       const payload = {
         plateNumber: validatePlateNumber(form.plateNumber.value),
-        showdocWebhook: validateHttpUrl(form.showdocWebhook.value.trim(), "ShowDoc Webhook"),
+        showdocWebhook: form.showdocWebhook.value.trim()
+          ? validateHttpUrl(form.showdocWebhook.value.trim(), "ShowDoc Webhook")
+          : "",
         showdocToken: form.showdocToken.value.trim(),
         wechatWorkWebhook: form.wechatWorkWebhook.value.trim()
           ? validateHttpUrl(form.wechatWorkWebhook.value.trim(), "企业微信群机器人 Webhook")
@@ -306,6 +312,7 @@ function setupBindPage() {
         smsEnabled,
         privacyCallEnabled,
       };
+      if (!hasNotificationChannel(payload)) throw new Error("请至少配置 ShowDoc、微信、短信或隐私号中的一种通知方式。");
       const data = await request("/api/vehicles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
