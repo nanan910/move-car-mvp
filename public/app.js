@@ -458,6 +458,7 @@ function setupSetupPage() {
         `Worker：${escapeHtml(data.status)}<br>
          D1：${data.d1 ? "已绑定" : "未绑定"}<br>
          加密密钥：${data.encryption ? "已配置" : "未配置"}<br>
+         OCR 演示模式：${data.ocrDemo ? "已开启" : "未开启"}<br>
          腾讯云 OCR：${data.tencentOcr ? "已配置" : "未配置"}<br>
          短信：${data.tencentSms ? "已配置" : "未配置"}<br>
          隐私号：${data.privacyCall ? "已配置" : "未配置"}<br>
