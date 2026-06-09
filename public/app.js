@@ -381,7 +381,8 @@ function setupSetupPage() {
          加密密钥：${data.encryption ? "已配置" : "未配置"}<br>
          腾讯云 OCR：${data.tencentOcr ? "已配置" : "未配置"}<br>
          短信：${data.tencentSms ? "已配置" : "未配置"}<br>
-         隐私号：${data.privacyCall ? "已配置" : "未配置"}`
+         隐私号：${data.privacyCall ? "已配置" : "未配置"}<br>
+         缺失项：${data.missing?.length ? data.missing.map(escapeHtml).join("、") : "无"}`
       );
     } catch (error) {
       show(health, escapeHtml(error.message), true);
