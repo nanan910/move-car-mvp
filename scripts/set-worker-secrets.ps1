@@ -1,5 +1,6 @@
 param(
-  [string]$Config = "worker/wrangler.toml"
+  [string]$Config = "worker/wrangler.toml",
+  [string]$NpxPath = "npx"
 )
 
 $ErrorActionPreference = "Stop"
@@ -11,11 +12,26 @@ function Require-Command {
   }
 }
 
+function Resolve-Npx {
+  param([string]$Preferred)
+  if (Get-Command $Preferred -ErrorAction SilentlyContinue) {
+    return (Get-Command $Preferred).Source
+  }
+  $dDriveNpx = "D:\nodejs\npx.cmd"
+  if (Test-Path $dDriveNpx) { return $dDriveNpx }
+  throw "npx is required. Install Node.js/npm first, then run npm install."
+}
+
 function New-RandomSecret {
   param([int]$Bytes = 32)
   $buffer = New-Object byte[] $Bytes
-  [System.Security.Cryptography.RandomNumberGenerator]::Fill($buffer)
-  return [Convert]::ToBase64String($buffer)
+  $rng = New-Object System.Security.Cryptography.RNGCryptoServiceProvider
+  try {
+    $rng.GetBytes($buffer)
+    return [Convert]::ToBase64String($buffer)
+  } finally {
+    $rng.Dispose()
+  }
 }
 
 function Read-SecretValue {
@@ -49,11 +65,11 @@ function Set-WorkerSecret {
   )
   if (-not $Value) { return }
   Write-Host "Setting $Name..."
-  $Value | npx wrangler secret put $Name --config $Config
+  $Value | & $script:Npx wrangler secret put $Name --config $Config
 }
 
-Require-Command npm
-Require-Command npx
+$script:Npx = Resolve-Npx $NpxPath
+$env:Path = "$(Split-Path $script:Npx);" + $env:Path
 
 if (-not (Test-Path $Config)) {
   throw "Wrangler config not found: $Config"
