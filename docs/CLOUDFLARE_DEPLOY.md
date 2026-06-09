@@ -50,6 +50,14 @@ npm install
 .\scripts\set-ocr-secrets.ps1 -Deploy
 ```
 
+从 OCR 演示模式切到正式腾讯云 OCR，推荐运行：
+
+```powershell
+.\scripts\promote-production.ps1
+```
+
+该脚本会设置腾讯云 OCR secrets、删除 `OCR_DEMO_MODE`、部署 Worker，并运行生产检查。需要保留演示开关用于灰度时，可加 `-KeepOcrDemoMode`。
+
 如果暂时没有腾讯云密钥，但需要演示完整绑定流程，可以临时开启服务端 OCR 演示模式：
 
 ```powershell
