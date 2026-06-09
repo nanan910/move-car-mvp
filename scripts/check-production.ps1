@@ -71,7 +71,11 @@ if ($missingSecrets.Count) {
   Write-Host "Required Worker secrets are present."
 }
 if ($secretNames -contains "OCR_DEMO_MODE") {
-  Write-Warning "OCR_DEMO_MODE is set. This is useful for demos, but production OCR should use Tencent Cloud secrets."
+  if ($missingSecrets -contains "TENCENT_SECRET_ID" -or $missingSecrets -contains "TENCENT_SECRET_KEY") {
+    Write-Warning "OCR_DEMO_MODE is set and Tencent OCR secrets are missing. OCR currently uses server-side demo mode."
+  } else {
+    Write-Host "OCR_DEMO_MODE is set, but Tencent OCR secrets are present; real Tencent OCR takes priority."
+  }
 }
 
 Write-Step "Checking D1 migrations"
