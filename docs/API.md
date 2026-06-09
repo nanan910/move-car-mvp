@@ -51,7 +51,7 @@ Required config:
 
 Temporary demo config:
 
-- `OCR_DEMO_MODE=true`: returns a server-side demo plate without Tencent Cloud OCR
+- `OCR_DEMO_MODE=true`: returns a server-side demo plate only when Tencent Cloud OCR secrets are missing
 - `OCR_DEMO_PLATE`: optional demo plate value, defaults to `粤B12345`
 
 Validation errors:
