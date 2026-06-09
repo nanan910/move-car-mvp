@@ -15,6 +15,7 @@ Response:
   "status": "degraded",
   "d1": true,
   "encryption": true,
+  "ocrDemo": false,
   "tencentOcr": false,
   "tencentSms": false,
   "privacyCall": false,
@@ -47,6 +48,11 @@ Required config:
 
 - `TENCENT_SECRET_ID`
 - `TENCENT_SECRET_KEY`
+
+Temporary demo config:
+
+- `OCR_DEMO_MODE=true`: returns a server-side demo plate without Tencent Cloud OCR
+- `OCR_DEMO_PLATE`: optional demo plate value, defaults to `粤B12345`
 
 Validation errors:
 
