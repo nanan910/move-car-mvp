@@ -15,6 +15,7 @@ It must not expose:
 - Owner phone number
 - WeChat identity
 - ShowDoc webhook or token
+- WeCom/WeChat Work robot webhook or key
 - Full vehicle binding configuration
 - Tencent Cloud credentials
 - Privacy-call service token
@@ -25,6 +26,7 @@ The Cloudflare Worker stores sensitive fields server-side only:
 
 - Owner phone number: encrypted before D1 storage
 - ShowDoc token: encrypted before D1 storage
+- WeCom/WeChat Work robot webhook: encrypted before D1 storage
 - Full plate number: normalized and hashed; public responses use masked plate text
 - Visitor IP: hashed with a salt for rate limiting
 
@@ -42,7 +44,7 @@ The Cloudflare Worker stores sensitive fields server-side only:
 
 ## Demo mode
 
-GitHub Pages defaults to browser demo mode until a real Worker URL is configured. Demo data is stored in browser `localStorage` and is not a production data store.
+GitHub Pages points to the deployed Cloudflare Worker. Browser demo mode can still be enabled locally by clearing `MOVE_CAR_API_BASE` and setting `MOVE_CAR_DEMO_MODE = true`; demo data is stored in browser `localStorage` and is not a production data store.
 
 ## Production checklist
 
