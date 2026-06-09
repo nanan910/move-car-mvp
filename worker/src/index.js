@@ -29,6 +29,7 @@ function matchRoute(method, pathname) {
     ["POST", /^\/api\/vehicles\/([^/]+)\/notify$/, handleNotify, ["vehicleToken"]],
     ["GET", /^\/api\/owner\/([^/]+)\/vehicle$/, handleOwnerVehicle, ["ownerToken"]],
     ["PATCH", /^\/api\/owner\/([^/]+)\/vehicle$/, handlePatchOwnerVehicle, ["ownerToken"]],
+    ["POST", /^\/api\/owner\/([^/]+)\/vehicle\/regenerate-token$/, handleRegenerateVehicleToken, ["ownerToken"]],
   ];
   for (const [routeMethod, pattern, handler, keys = []] of routes) {
     const match = pathname.match(pattern);
@@ -278,6 +279,17 @@ async function handlePatchOwnerVehicle({ request, env, params }) {
   values.push(nowIso(), vehicle.id);
   await env.DB.prepare(`UPDATE vehicles SET ${updates.join(", ")} WHERE id = ?`).bind(...values).run();
   return json({ message: "配置已更新。" });
+}
+
+async function handleRegenerateVehicleToken({ env, params }) {
+  assertConfig(env, ["DB"]);
+  const vehicle = await getVehicleByOwnerToken(env, params.ownerToken);
+  if (!vehicle) return json({ error: "not_found", message: "管理链接无效。" }, 404);
+  const vehicleToken = await token("veh");
+  await env.DB.prepare("UPDATE vehicles SET vehicle_token = ?, updated_at = ? WHERE id = ?")
+    .bind(vehicleToken, nowIso(), vehicle.id)
+    .run();
+  return json({ vehicleToken, maskedPlate: vehicle.plate_number_masked });
 }
 
 async function getVehicleByToken(env, vehicleToken) {
