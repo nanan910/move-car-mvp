@@ -161,6 +161,13 @@ button:disabled {
   padding: 14px;
 }
 
+.checklist {
+  color: var(--muted);
+  line-height: 1.8;
+  margin: 0;
+  padding-left: 22px;
+}
+
 .result.error {
   border-color: #fecdca;
   color: var(--danger);
