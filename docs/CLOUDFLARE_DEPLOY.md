@@ -35,7 +35,14 @@ GitHub Pages 已经可以运行浏览器 demo。要启用真实扫码通知，�
 
 ## 3. 配置 Worker 运行时 secrets
 
-Worker 业务密钥不要写进仓库。安装 npm/wrangler 后运行：
+Worker 业务密钥不要写进仓库。安装 npm/wrangler 后，可以运行交互脚本：
+
+```powershell
+npm install
+.\scripts\set-worker-secrets.ps1
+```
+
+脚本会自动生成 `DATA_ENCRYPTION_KEY` 和 `IP_HASH_SALT`，并提示输入腾讯云/短信/隐私号配置。也可以手动运行：
 
 ```powershell
 npm install
