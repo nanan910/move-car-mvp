@@ -99,6 +99,15 @@ Worker 运行时密钥可用交互脚本配置：
 .\scripts\set-ocr-secrets.ps1 -Deploy
 ```
 
+没有腾讯云 OCR 密钥时，也可以临时开启服务端 OCR 演示模式完成绑定流程演示：
+
+```powershell
+"true" | npx wrangler secret put OCR_DEMO_MODE --config worker/wrangler.toml
+npx wrangler deploy --config worker/wrangler.toml
+```
+
+正式上线前请删除或改回该 secret，并配置真实 `TENCENT_SECRET_ID` / `TENCENT_SECRET_KEY`。
+
 生产部署后可运行：
 
 ```powershell
