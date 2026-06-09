@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>扫码挪车 - 部署检查</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body data-page="setup">
+    <header class="topbar">
+      <a class="brand" href="./index.html">扫码挪车</a>
+      <nav>
+        <a href="./index.html">车主绑定</a>
+        <a href="./owner.html">车主管理</a>
+        <a href="./setup.html">部署检查</a>
+      </nav>
+    </header>
+
+    <main class="shell">
+      <section class="panel intro">
+        <p class="eyebrow">上线前检查</p>
+        <h1>确认 GitHub Pages 与 Worker 配置状态</h1>
+        <p>先用浏览器 demo 演示，等 Cloudflare Worker 和密钥配置完成后，在这里检查真实后端是否可用。</p>
+      </section>
+
+      <section class="panel">
+        <h2>当前前端配置</h2>
+        <div id="setupStatus" class="result">正在读取配置...</div>
+        <form id="setupCheckForm" class="stack">
+          <label>
+            临时 Worker API 地址
+            <input id="apiBase" name="apiBase" placeholder="https://your-worker.example.workers.dev" />
+          </label>
+          <button type="submit">检查 Worker 健康状态</button>
+        </form>
+        <div id="healthResult" class="result hidden"></div>
+      </section>
+
+      <section class="panel">
+        <h2>真实上线清单</h2>
+        <ul class="checklist">
+          <li>GitHub Pages 已启用，并能访问静态前端。</li>
+          <li>Cloudflare D1 已创建，`worker/wrangler.toml` 已填写真实 `database_id`。</li>
+          <li>GitHub Actions secrets 已添加 `CLOUDFLARE_API_TOKEN` 和 `CLOUDFLARE_ACCOUNT_ID`。</li>
+          <li>Worker secrets 已设置 `DATA_ENCRYPTION_KEY`、腾讯云 OCR 密钥、通知相关密钥。</li>
+          <li>`public/config.js` 已填写 Worker API 地址，并将 demo 模式关闭。</li>
+        </ul>
+      </section>
+    </main>
+
+    <script src="./config.js"></script>
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
