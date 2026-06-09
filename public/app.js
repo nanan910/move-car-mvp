@@ -356,6 +356,40 @@ function setupMovePage() {
   loadPublic().catch((error) => show(vehicle, escapeHtml(error.message), true));
 }
 
+function setupSetupPage() {
+  setApiInput();
+  const status = document.querySelector("#setupStatus");
+  const form = document.querySelector("#setupCheckForm");
+  const health = document.querySelector("#healthResult");
+  const configuredBase = window.MOVE_CAR_API_BASE || "";
+  show(
+    status,
+    `GitHub Pages：已加载<br>
+     Worker API：${configuredBase ? escapeHtml(configuredBase) : "未配置"}<br>
+     Demo 模式：${DEMO_MODE ? "启用" : "关闭"}`
+  );
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    show(health, "正在检查 Worker...");
+    try {
+      const data = await request("/api/health");
+      show(
+        health,
+        `Worker：${escapeHtml(data.status)}<br>
+         D1：${data.d1 ? "已绑定" : "未绑定"}<br>
+         加密密钥：${data.encryption ? "已配置" : "未配置"}<br>
+         腾讯云 OCR：${data.tencentOcr ? "已配置" : "未配置"}<br>
+         短信：${data.tencentSms ? "已配置" : "未配置"}<br>
+         隐私号：${data.privacyCall ? "已配置" : "未配置"}`
+      );
+    } catch (error) {
+      show(health, escapeHtml(error.message), true);
+    }
+  });
+}
+
 if (page === "bind") setupBindPage();
 if (page === "owner") setupOwnerPage();
 if (page === "move") setupMovePage();
+if (page === "setup") setupSetupPage();
