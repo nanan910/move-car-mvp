@@ -48,6 +48,7 @@ function handleHealth({ env }) {
     status: missing.length ? "degraded" : "ok",
     d1: Boolean(env.DB),
     encryption: Boolean(env.DATA_ENCRYPTION_KEY),
+    ocrDemo: isOcrDemo(env),
     tencentOcr: Boolean(env.TENCENT_SECRET_ID && env.TENCENT_SECRET_KEY),
     tencentSms: Boolean(
       env.TENCENT_SECRET_ID &&
@@ -78,6 +79,13 @@ async function handlePlateOcr({ request, env }) {
   const image = form.get("image");
   const imageError = validateOcrImage(image, env);
   if (imageError) return json(imageError, 400);
+  if (isOcrDemo(env)) {
+    return json({
+      plateNumber: env.OCR_DEMO_PLATE || "粤B12345",
+      candidates: [{ plateNumber: env.OCR_DEMO_PLATE || "粤B12345", color: "demo" }],
+      demo: true,
+    });
+  }
   assertConfig(env, ["TENCENT_SECRET_ID", "TENCENT_SECRET_KEY"]);
   const bytes = new Uint8Array(await image.arrayBuffer());
   const imageBase64 = bytesToBase64(bytes);
@@ -95,6 +103,10 @@ async function handlePlateOcr({ request, env }) {
     candidates: plateNumber ? [{ plateNumber, color: result.Color || "" }] : [],
     rawRequestId: result.RequestId,
   });
+}
+
+function isOcrDemo(env) {
+  return String(env.OCR_DEMO_MODE || "").toLowerCase() === "true";
 }
 
 function validateOcrImage(image, env) {
