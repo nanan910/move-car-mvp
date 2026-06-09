@@ -11,6 +11,9 @@ export default {
       const context = { request, env, url, params: route.params };
       return cors(await route.handler(context), env);
     } catch (error) {
+      if (error instanceof ConfigError) {
+        return cors(json({ error: "config_error", message: error.message, missing: error.missing }, 503, env), env);
+      }
       return cors(json({ error: "server_error", message: error.message || "服务异常。" }, 500, env), env);
     }
   },
@@ -39,8 +42,9 @@ function matchRoute(method, pathname) {
 }
 
 function handleHealth({ env }) {
+  const missing = requiredConfig(env).filter((item) => !item.ok).map((item) => item.name);
   return json({
-    status: "ok",
+    status: missing.length ? "degraded" : "ok",
     d1: Boolean(env.DB),
     encryption: Boolean(env.DATA_ENCRYPTION_KEY),
     tencentOcr: Boolean(env.TENCENT_SECRET_ID && env.TENCENT_SECRET_KEY),
@@ -52,6 +56,7 @@ function handleHealth({ env }) {
         env.TENCENT_SMS_TEMPLATE_ID
     ),
     privacyCall: Boolean(env.PRIVACY_CALL_WEBHOOK_URL),
+    missing,
   });
 }
 
@@ -68,10 +73,10 @@ function json(body, status = 200) {
 }
 
 async function handlePlateOcr({ request, env }) {
+  assertConfig(env, ["TENCENT_SECRET_ID", "TENCENT_SECRET_KEY"]);
   const form = await request.formData();
   const image = form.get("image");
   if (!image || typeof image === "string") return json({ error: "missing_image", message: "请上传车牌照片。" }, 400);
-  assertEnv(env, ["TENCENT_SECRET_ID", "TENCENT_SECRET_KEY"]);
   const bytes = new Uint8Array(await image.arrayBuffer());
   const imageBase64 = bytesToBase64(bytes);
   const result = await tencentApi(env, {
@@ -91,6 +96,7 @@ async function handlePlateOcr({ request, env }) {
 }
 
 async function handleCreateVehicle({ request, env }) {
+  assertConfig(env, ["DB", "DATA_ENCRYPTION_KEY"]);
   const input = await readJson(request);
   const plateNumber = normalizePlate(input.plateNumber);
   if (!plateNumber) return json({ error: "missing_plate", message: "请确认车牌号。" }, 400);
@@ -128,6 +134,7 @@ async function handleCreateVehicle({ request, env }) {
 }
 
 async function handlePublicVehicle({ env, params }) {
+  assertConfig(env, ["DB"]);
   const vehicle = await getVehicleByToken(env, params.vehicleToken);
   if (!vehicle) return json({ error: "not_found", message: "车辆不存在。" }, 404);
   return json({
@@ -137,6 +144,7 @@ async function handlePublicVehicle({ env, params }) {
 }
 
 async function handleNotify({ request, env, params }) {
+  assertConfig(env, ["DB", "DATA_ENCRYPTION_KEY"]);
   const input = await readJson(request);
   const channel = input.channel || "showdoc";
   const vehicle = await getVehicleByToken(env, params.vehicleToken);
@@ -180,6 +188,7 @@ async function handleNotify({ request, env, params }) {
 }
 
 async function handleOwnerVehicle({ env, params }) {
+  assertConfig(env, ["DB"]);
   const vehicle = await getVehicleByOwnerToken(env, params.ownerToken);
   if (!vehicle) return json({ error: "not_found", message: "管理链接无效。" }, 404);
   const logs = await env.DB.prepare(
@@ -200,6 +209,7 @@ async function handleOwnerVehicle({ env, params }) {
 }
 
 async function handlePatchOwnerVehicle({ request, env, params }) {
+  assertConfig(env, ["DB", "DATA_ENCRYPTION_KEY"]);
   const vehicle = await getVehicleByOwnerToken(env, params.ownerToken);
   if (!vehicle) return json({ error: "not_found", message: "管理链接无效。" }, 404);
   const input = await readJson(request);
@@ -349,6 +359,30 @@ async function readJson(request) {
 function assertEnv(env, keys) {
   const missing = keys.filter((key) => !env[key]);
   if (missing.length) throw new Error(`缺少环境变量：${missing.join(", ")}`);
+}
+
+function requiredConfig(env) {
+  return [
+    { name: "DB", ok: Boolean(env.DB) },
+    { name: "DATA_ENCRYPTION_KEY", ok: Boolean(env.DATA_ENCRYPTION_KEY) },
+    { name: "TENCENT_SECRET_ID", ok: Boolean(env.TENCENT_SECRET_ID) },
+    { name: "TENCENT_SECRET_KEY", ok: Boolean(env.TENCENT_SECRET_KEY) },
+  ];
+}
+
+function assertConfig(env, keys) {
+  const missing = keys.filter((key) => !env[key]);
+  if (missing.length) {
+    throw new ConfigError(`后端配置不完整：${missing.join(", ")}`, missing);
+  }
+}
+
+class ConfigError extends Error {
+  constructor(message, missing) {
+    super(message);
+    this.name = "ConfigError";
+    this.missing = missing;
+  }
 }
 
 async function token(prefix) {
