@@ -51,7 +51,7 @@
           </label>
           <label>
             ShowDoc Webhook
-            <input id="showdocWebhook" name="showdocWebhook" placeholder="https://..." required />
+            <input id="showdocWebhook" name="showdocWebhook" placeholder="https://..." inputmode="url" required />
           </label>
           <label>
             ShowDoc Token
@@ -77,6 +77,7 @@
           </label>
           <button type="submit">创建绑定并生成二维码</button>
         </form>
+        <p class="form-note">手机号仅在服务端加密保存；访客扫码页面不会显示手机号、ShowDoc webhook 或 token。</p>
         <div id="bindResult" class="result hidden"></div>
       </section>
     </main>
