@@ -44,6 +44,12 @@ npm install
 
 脚本会自动生成 `DATA_ENCRYPTION_KEY` 和 `IP_HASH_SALT`，并提示输入腾讯云/短信/隐私号配置。也可以手动运行：
 
+如果已经配置过 D1、加密密钥和 IP 哈希盐，只缺车牌 OCR，可只运行：
+
+```powershell
+.\scripts\set-ocr-secrets.ps1 -Deploy
+```
+
 ```powershell
 npm install
 npx wrangler secret put DATA_ENCRYPTION_KEY --config worker/wrangler.toml
@@ -80,3 +86,11 @@ Cloudflare 配好后：
 - `tencentOcr: true`
 
 如果 `status: degraded`，按 `missing` 列表继续补 Cloudflare binding 或 Worker secrets。
+
+也可以在本地执行生产检查脚本：
+
+```powershell
+.\scripts\check-production.ps1
+```
+
+它会检查 GitHub Pages 配置、Worker secrets、D1 migration，并尝试访问 `/api/health`。
