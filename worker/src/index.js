@@ -176,10 +176,10 @@ async function handlePublicVehicle({ env, params }) {
 async function handleNotify({ request, env, params }) {
   assertConfig(env, ["DB", "DATA_ENCRYPTION_KEY"]);
   const input = await readJson(request);
-  const channel = input.channel || "showdoc";
   const vehicle = await getVehicleByToken(env, params.vehicleToken);
   if (!vehicle) return json({ error: "not_found", message: "车辆不存在。" }, 404);
-  if (!availableChannels(vehicle).includes(channel)) {
+  const channel = input.channel || defaultNotifyChannel(vehicle);
+  if (!channel || !availableChannels(vehicle).includes(channel)) {
     return json({ error: "channel_unavailable", message: "该通知方式尚未配置。" }, 400);
   }
 
@@ -215,7 +215,7 @@ async function handleNotify({ request, env, params }) {
     .run();
 
   if (status === "failed") return json({ error: "notify_failed", message: errorSummary || "通知发送失败。" }, 502);
-  return json({ message: "已通知车主，请耐心等待。" });
+  return json({ message: "已通知车主，请耐心等待。", channel });
 }
 
 async function handleOwnerVehicle({ env, params }) {
@@ -295,6 +295,11 @@ function availableChannels(vehicle) {
   if (vehicle.sms_enabled && vehicle.owner_phone_encrypted) channels.push("sms");
   if (vehicle.privacy_call_enabled && vehicle.owner_phone_encrypted) channels.push("privacy_call");
   return channels;
+}
+
+function defaultNotifyChannel(vehicle) {
+  const channels = availableChannels(vehicle);
+  return ["wechat_work", "showdoc", "sms", "privacy_call"].find((channel) => channels.includes(channel)) || "";
 }
 
 async function sendShowDoc(vehicle, env) {
