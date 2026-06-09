@@ -34,6 +34,9 @@ async function main() {
 
     const demoEnv = env;
     env = { ...env, OCR_DEMO_MODE: "true", OCR_DEMO_PLATE: "粤B54321" };
+    const demoHealth = await call("GET", "/api/health");
+    assert(demoHealth.body.status === "ok", "OCR demo mode should satisfy OCR health when Tencent secrets are missing");
+    assert(demoHealth.body.ocrDemo === true, "health should report active OCR demo mode");
     const demoOcrForm = new FormData();
     demoOcrForm.set("image", new Blob(["fake image bytes"], { type: "image/jpeg" }), "plate.jpg");
     const demoOcr = await callRequest(
@@ -46,6 +49,23 @@ async function main() {
     assert(demoOcr.status === 200, "OCR demo mode should return 200 without Tencent secrets");
     assert(demoOcr.body.demo === true, "OCR demo response should be marked as demo");
     assert(demoOcr.body.plateNumber === "粤B54321", "OCR demo should return configured demo plate");
+
+    env = { ...env, TENCENT_SECRET_ID: "test-secret-id", TENCENT_SECRET_KEY: "test-secret-key" };
+    const realHealth = await call("GET", "/api/health");
+    assert(realHealth.body.status === "ok", "Tencent OCR secrets should satisfy health even if OCR demo secret remains set");
+    assert(realHealth.body.ocrDemo === false, "health should report OCR demo inactive when Tencent OCR is configured");
+    const realOcrForm = new FormData();
+    realOcrForm.set("image", new Blob(["fake image bytes"], { type: "image/jpeg" }), "plate.jpg");
+    const realOcr = await callRequest(
+      new Request("https://api.example.test/api/ocr/plate", {
+        method: "POST",
+        headers: new Headers({ "CF-Connecting-IP": "203.0.113.8" }),
+        body: realOcrForm,
+      })
+    );
+    assert(realOcr.status === 200, "Tencent OCR should be used when secrets are present");
+    assert(realOcr.body.demo !== true, "Tencent OCR response should not be marked as demo");
+    assert(realOcr.body.plateNumber === "粤B99999", "Tencent OCR mock should return OCR result");
     env = demoEnv;
 
     const invalidWebhook = await call("POST", "/api/vehicles", {
@@ -163,6 +183,11 @@ function mockFetch(webhookCalls) {
     if (url.startsWith("https://qyapi.weixin.qq.com/")) {
       webhookCalls.push({ kind: "wechat_work", ...JSON.parse(init?.body || "{}") });
       return new Response(JSON.stringify({ errcode: 0, errmsg: "ok" }), { status: 200 });
+    }
+    if (url === "https://ocr.tencentcloudapi.com") {
+      return new Response(JSON.stringify({ Response: { Number: "粤B99999", Color: "blue", RequestId: "ocr-test" } }), {
+        status: 200,
+      });
     }
     return originalFetch(input, init);
   };
