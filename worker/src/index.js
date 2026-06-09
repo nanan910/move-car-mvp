@@ -135,13 +135,14 @@ async function handleCreateVehicle({ request, env }) {
   const now = nowIso();
   const encryptedPhone = input.ownerPhone ? await encryptText(env, normalizePhone(input.ownerPhone)) : null;
   const encryptedShowdocToken = input.showdocToken ? await encryptText(env, input.showdocToken) : null;
+  const encryptedWechatWorkWebhook = input.wechatWorkWebhook ? await encryptText(env, normalizeHttpUrl(input.wechatWorkWebhook)) : null;
 
   await env.DB.prepare(
     `INSERT INTO vehicles (
       vehicle_token, owner_token, plate_number_masked, plate_number_hash,
       owner_phone_encrypted, showdoc_webhook, showdoc_token_encrypted,
-      sms_enabled, privacy_call_enabled, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      wechat_work_webhook_encrypted, sms_enabled, privacy_call_enabled, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       vehicleToken,
@@ -151,6 +152,7 @@ async function handleCreateVehicle({ request, env }) {
       encryptedPhone,
       normalizeHttpUrl(input.showdocWebhook),
       encryptedShowdocToken,
+      encryptedWechatWorkWebhook,
       input.smsEnabled ? 1 : 0,
       input.privacyCallEnabled ? 1 : 0,
       now,
@@ -197,6 +199,7 @@ async function handleNotify({ request, env, params }) {
   let errorSummary = "";
   try {
     if (channel === "showdoc") await sendShowDoc(vehicle, env);
+    if (channel === "wechat_work") await sendWechatWork(vehicle, env);
     if (channel === "sms") await sendTencentSms(vehicle, env);
     if (channel === "privacy_call") await startPrivacyCall(vehicle, env);
   } catch (error) {
@@ -230,6 +233,7 @@ async function handleOwnerVehicle({ env, params }) {
     vehicleToken: vehicle.vehicle_token,
     maskedPlate: vehicle.plate_number_masked,
     showdocEnabled: Boolean(vehicle.showdoc_webhook),
+    wechatWorkEnabled: Boolean(vehicle.wechat_work_webhook_encrypted),
     smsEnabled: Boolean(vehicle.sms_enabled),
     privacyCallEnabled: Boolean(vehicle.privacy_call_enabled),
     recentNotifications: logs.results || [],
@@ -252,6 +256,10 @@ async function handlePatchOwnerVehicle({ request, env, params }) {
   if (input.showdocToken) {
     updates.push("showdoc_token_encrypted = ?");
     values.push(await encryptText(env, input.showdocToken));
+  }
+  if (input.wechatWorkWebhook) {
+    updates.push("wechat_work_webhook_encrypted = ?");
+    values.push(await encryptText(env, normalizeHttpUrl(input.wechatWorkWebhook)));
   }
   if (input.ownerPhone) {
     updates.push("owner_phone_encrypted = ?");
@@ -283,6 +291,7 @@ async function getVehicleByOwnerToken(env, ownerToken) {
 function availableChannels(vehicle) {
   const channels = [];
   if (vehicle.showdoc_webhook) channels.push("showdoc");
+  if (vehicle.wechat_work_webhook_encrypted) channels.push("wechat_work");
   if (vehicle.sms_enabled && vehicle.owner_phone_encrypted) channels.push("sms");
   if (vehicle.privacy_call_enabled && vehicle.owner_phone_encrypted) channels.push("privacy_call");
   return channels;
@@ -301,6 +310,26 @@ async function sendShowDoc(vehicle, env) {
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`ShowDoc 通知失败：${res.status}`);
+}
+
+async function sendWechatWork(vehicle, env) {
+  const webhook = await decryptText(env, vehicle.wechat_work_webhook_encrypted);
+  const body = {
+    msgtype: "text",
+    text: {
+      content: `扫码挪车提醒：车辆 ${vehicle.plate_number_masked} 收到挪车提醒，请及时处理。`,
+    },
+  };
+  const res = await fetch(webhook, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`企业微信通知失败：${res.status}`);
+  const data = await res.json().catch(() => ({}));
+  if (data.errcode && data.errcode !== 0) {
+    throw new Error(`企业微信通知失败：${data.errmsg || data.errcode}`);
+  }
 }
 
 async function sendTencentSms(vehicle, env) {
@@ -445,6 +474,9 @@ function validateVehicleInput(input, { requireWebhook = false, partial = false, 
     if (!isHttpUrl(input.showdocWebhook)) {
       return { error: "invalid_showdoc_webhook", message: "ShowDoc Webhook 必须是 http 或 https 地址。" };
     }
+  }
+  if (input.wechatWorkWebhook && !isHttpUrl(input.wechatWorkWebhook)) {
+    return { error: "invalid_wechat_work_webhook", message: "企业微信机器人 Webhook 必须是 http 或 https 地址。" };
   }
   const requiresPhone = Boolean(input.smsEnabled || input.privacyCallEnabled);
   if ((requiresPhone && !hasStoredPhone) || input.ownerPhone) {
