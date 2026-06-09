@@ -128,7 +128,7 @@ async function handleCreateVehicle({ request, env }) {
   assertConfig(env, ["DB", "DATA_ENCRYPTION_KEY"]);
   const input = await readJson(request);
   const plateNumber = normalizePlate(input.plateNumber);
-  const validationError = validateVehicleInput(input, { requireWebhook: true });
+  const validationError = validateVehicleInput(input, { requireNotification: true });
   if (validationError) return json(validationError, 400);
 
   const vehicleToken = await token("veh");
@@ -151,7 +151,7 @@ async function handleCreateVehicle({ request, env }) {
       maskPlate(plateNumber),
       await sha256Hex(plateNumber),
       encryptedPhone,
-      normalizeHttpUrl(input.showdocWebhook),
+      input.showdocWebhook ? normalizeHttpUrl(input.showdocWebhook) : "",
       encryptedShowdocToken,
       encryptedWechatWorkWebhook,
       input.smsEnabled ? 1 : 0,
@@ -482,12 +482,15 @@ function normalizePhone(value) {
   return String(value || "").trim().replace(/[\s-]/g, "");
 }
 
-function validateVehicleInput(input, { requireWebhook = false, partial = false, hasStoredPhone = false } = {}) {
+function validateVehicleInput(input, { requireNotification = false, partial = false, hasStoredPhone = false } = {}) {
   const plate = normalizePlate(input.plateNumber);
   if (!partial && !/^[\u4e00-\u9fa5A-Z0-9]{5,10}$/.test(plate)) {
     return { error: "invalid_plate", message: "请填写有效车牌号。" };
   }
-  if (requireWebhook || input.showdocWebhook) {
+  if (requireNotification && !input.showdocWebhook && !input.wechatWorkWebhook && !input.smsEnabled && !input.privacyCallEnabled) {
+    return { error: "missing_notification_channel", message: "请至少配置 ShowDoc、微信、短信或隐私号中的一种通知方式。" };
+  }
+  if (input.showdocWebhook) {
     if (!isHttpUrl(input.showdocWebhook)) {
       return { error: "invalid_showdoc_webhook", message: "ShowDoc Webhook 必须是 http 或 https 地址。" };
     }
