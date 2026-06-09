@@ -70,6 +70,9 @@ if ($missingSecrets.Count) {
 } else {
   Write-Host "Required Worker secrets are present."
 }
+if ($secretNames -contains "OCR_DEMO_MODE") {
+  Write-Warning "OCR_DEMO_MODE is set. This is useful for demos, but production OCR should use Tencent Cloud secrets."
+}
 
 Write-Step "Checking D1 migrations"
 & $npx wrangler d1 migrations list move-car-db --config $Config --remote
