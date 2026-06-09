@@ -84,10 +84,25 @@ async function main() {
     assert(!publicText.includes("private-showdoc-token"), "public response must not leak ShowDoc token");
     assert(!publicText.includes("https://showdoc.example"), "public response must not leak ShowDoc webhook");
 
+    const wechatVehicle = await call("POST", "/api/vehicles", {
+      plateNumber: "粤B54321",
+      showdocWebhook: "https://showdoc.example/webhook",
+      wechatWorkWebhook: "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=private-wechat-key",
+    });
+    assert(wechatVehicle.status === 201, "create vehicle with WeCom webhook should return 201");
+    const wechatPublic = await call("GET", `/api/vehicles/${wechatVehicle.body.vehicleToken}/public`);
+    const wechatPublicText = JSON.stringify(wechatPublic.body);
+    assert(wechatPublic.body.availableChannels.includes("wechat_work"), "WeCom channel should be public as a channel only");
+    assert(!wechatPublicText.includes("private-wechat-key"), "public response must not leak WeCom webhook");
+    const wechatNotify = await call("POST", `/api/vehicles/${wechatVehicle.body.vehicleToken}/notify`, { channel: "wechat_work" });
+    assert(wechatNotify.status === 200, "WeCom notify should return 200");
+    assert(sentWebhooks.some((item) => item.kind === "wechat_work"), "WeCom webhook should be called once");
+
     const notify = await call("POST", `/api/vehicles/${created.body.vehicleToken}/notify`, { channel: "showdoc" });
     assert(notify.status === 200, "first notify should return 200");
-    assert(sentWebhooks.length === 1, "ShowDoc webhook should be called once");
-    assert(sentWebhooks[0].token === "private-showdoc-token", "ShowDoc token should only be sent server-side");
+    const showdocCalls = sentWebhooks.filter((item) => item.kind === "showdoc");
+    assert(showdocCalls.length === 1, "ShowDoc webhook should be called once");
+    assert(showdocCalls[0].token === "private-showdoc-token", "ShowDoc token should only be sent server-side");
 
     const limited = await call("POST", `/api/vehicles/${created.body.vehicleToken}/notify`, { channel: "showdoc" });
     assert(limited.status === 429, "second notify should be rate limited");
@@ -100,6 +115,7 @@ async function main() {
     assert(!ownerText.includes("13800138000"), "owner response must not echo raw phone");
     assert(!ownerText.includes("private-showdoc-token"), "owner response must not echo ShowDoc token");
     assert(!ownerText.includes("https://showdoc.example"), "owner response must not echo ShowDoc webhook");
+    assert(!ownerText.includes("private-wechat-key"), "owner response must not echo WeCom webhook");
 
     const patch = await call("PATCH", `/api/owner/${created.body.ownerToken}/vehicle`, {
       smsEnabled: false,
@@ -126,8 +142,12 @@ function mockFetch(webhookCalls) {
   return async (input, init) => {
     const url = String(input);
     if (url.startsWith("https://showdoc.example/")) {
-      webhookCalls.push(JSON.parse(init?.body || "{}"));
+      webhookCalls.push({ kind: "showdoc", ...JSON.parse(init?.body || "{}") });
       return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    }
+    if (url.startsWith("https://qyapi.weixin.qq.com/")) {
+      webhookCalls.push({ kind: "wechat_work", ...JSON.parse(init?.body || "{}") });
+      return new Response(JSON.stringify({ errcode: 0, errmsg: "ok" }), { status: 200 });
     }
     return originalFetch(input, init);
   };
@@ -188,6 +208,7 @@ class FakeStatement {
         owner_phone_encrypted,
         showdoc_webhook,
         showdoc_token_encrypted,
+        wechat_work_webhook_encrypted,
         sms_enabled,
         privacy_call_enabled,
         created_at,
@@ -202,6 +223,7 @@ class FakeStatement {
         owner_phone_encrypted,
         showdoc_webhook,
         showdoc_token_encrypted,
+        wechat_work_webhook_encrypted,
         sms_enabled,
         privacy_call_enabled,
         created_at,
