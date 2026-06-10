@@ -4,11 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check public/app.js && node --check public/config.js && node --check worker/src/index.js && node --check scripts/serve-public.mjs && node --check scripts/mock-api.mjs && node --check scripts/verify-mvp.mjs && node --check scripts/verify-worker.mjs",
+    "check": "node --check public/app.js && node --check public/config.js && node --check worker/src/index.js && node --check scripts/serve-public.mjs && node --check scripts/mock-api.mjs && node --check scripts/verify-mvp.mjs && node --check scripts/verify-worker.mjs && node --check scripts/verify-production-notifications.mjs",
     "serve:public": "node scripts/serve-public.mjs",
     "serve:mock": "node scripts/mock-api.mjs",
     "verify:mvp": "node scripts/verify-mvp.mjs",
     "verify:worker": "node scripts/verify-worker.mjs",
+    "verify:production-notifications": "node scripts/verify-production-notifications.mjs",
     "preflight": "node scripts/verify-mvp.mjs && node scripts/verify-worker.mjs"
   },
   "devDependencies": {
