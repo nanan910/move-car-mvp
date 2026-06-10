@@ -63,7 +63,7 @@ try {
 Write-Step "Checking Worker secrets"
 $secretJson = & $npx wrangler secret list --config $Config
 $secretNames = (($secretJson -join "`n") | ConvertFrom-Json).name
-$requiredSecrets = @("DATA_ENCRYPTION_KEY", "IP_HASH_SALT", "TENCENT_SECRET_ID", "TENCENT_SECRET_KEY")
+$requiredSecrets = @("DATA_ENCRYPTION_KEY", "IP_HASH_SALT")
 $missingSecrets = $requiredSecrets | Where-Object { $secretNames -notcontains $_ }
 if ($missingSecrets.Count) {
   Write-Warning "Missing Worker secrets: $($missingSecrets -join ', ')"
@@ -71,11 +71,13 @@ if ($missingSecrets.Count) {
   Write-Host "Required Worker secrets are present."
 }
 if ($secretNames -contains "OCR_DEMO_MODE") {
-  if ($missingSecrets -contains "TENCENT_SECRET_ID" -or $missingSecrets -contains "TENCENT_SECRET_KEY") {
-    Write-Warning "OCR_DEMO_MODE is set and Tencent OCR secrets are missing. OCR currently uses server-side demo mode."
+  if ($secretNames -notcontains "TENCENT_SECRET_ID" -or $secretNames -notcontains "TENCENT_SECRET_KEY") {
+    Write-Host "OCR_DEMO_MODE is set. Tencent OCR is optional and currently skipped."
   } else {
     Write-Host "OCR_DEMO_MODE is set, but Tencent OCR secrets are present; real Tencent OCR takes priority."
   }
+} elseif ($secretNames -notcontains "TENCENT_SECRET_ID" -or $secretNames -notcontains "TENCENT_SECRET_KEY") {
+  Write-Warning "Tencent OCR secrets are missing and OCR_DEMO_MODE is not set. Plate photo OCR will not work until one OCR mode is configured."
 }
 
 Write-Step "Checking D1 migrations"
