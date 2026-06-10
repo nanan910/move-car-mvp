@@ -38,6 +38,23 @@
       </section>
 
       <section class="panel">
+        <h2>最后上线验收命令</h2>
+        <p class="form-note">不要把密钥或 webhook 发到聊天里。下面命令在你的 PowerShell 本机运行，脚本会在终端里提示你粘贴敏感值。</p>
+        <div class="command-list">
+          <div>
+            <strong>1. 切换到真实腾讯云 OCR</strong>
+            <pre class="command">cd C:\Users\32452\Documents\Codex\2026-06-09\goal-github
+powershell -ExecutionPolicy Bypass -File scripts\promote-production.ps1</pre>
+          </div>
+          <div>
+            <strong>2. 验证 ShowDoc + 微信真实通知</strong>
+            <pre class="command">cd C:\Users\32452\Documents\Codex\2026-06-09\goal-github
+powershell -ExecutionPolicy Bypass -File scripts\verify-production-notifications.ps1</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
         <h2>真实上线清单</h2>
         <ul class="checklist">
           <li>GitHub Pages 已启用，并能访问静态前端。</li>
