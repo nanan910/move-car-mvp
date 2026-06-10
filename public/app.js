@@ -114,6 +114,7 @@ async function demoRequest(path, options = {}) {
         vehicleToken: vehicle.vehicleToken,
         maskedPlate: vehicle.maskedPlate,
         showdocEnabled: vehicle.showdocEnabled,
+        wechatWorkEnabled: vehicle.wechatWorkEnabled,
         smsEnabled: vehicle.smsEnabled,
         privacyCallEnabled: vehicle.privacyCallEnabled,
         recentNotifications: state.logs
@@ -121,6 +122,12 @@ async function demoRequest(path, options = {}) {
           .map((log) => ({ channel: log.channel, status: log.status, created_at: new Date(log.time).toISOString() })),
         demo: true,
       };
+    }
+    if (method === "DELETE") {
+      state.vehicles = state.vehicles.filter((item) => item.ownerToken !== vehicle.ownerToken);
+      state.logs = state.logs.filter((log) => log.vehicleToken !== vehicle.vehicleToken);
+      saveDemoState(state);
+      return { message: "演示模式：绑定已删除。", demo: true };
     }
     if (method === "PATCH") {
       const input = JSON.parse(options.body || "{}");
@@ -354,6 +361,8 @@ function setupOwnerPage() {
   const patchResult = document.querySelector("#ownerPatchResult");
   const regenerateButton = document.querySelector("#regenerateTokenButton");
   const regenerateResult = document.querySelector("#regenerateResult");
+  const deleteButton = document.querySelector("#deleteVehicleButton");
+  const deleteResult = document.querySelector("#deleteVehicleResult");
 
   async function loadOwner() {
     const token = tokenInput.value.trim();
@@ -365,10 +374,12 @@ function setupOwnerPage() {
       `<strong>${escapeHtml(data.maskedPlate)}</strong><br>
        访客链接：<a href="${publicUrl}">${escapeHtml(publicUrl)}</a><br>
        ShowDoc：${data.showdocEnabled ? "已配置" : "未配置"}<br>
+       微信：${data.wechatWorkEnabled ? "已配置" : "未配置"}<br>
        短信：${data.smsEnabled ? "启用" : "停用"}，隐私号：${data.privacyCallEnabled ? "启用" : "停用"}<br>
        最近通知：${data.recentNotifications?.length || 0} 条`
     );
     regenerateButton.disabled = false;
+    deleteButton.disabled = false;
     return data;
   }
 
@@ -439,6 +450,26 @@ function setupOwnerPage() {
       await loadOwner();
     } catch (error) {
       show(regenerateResult, escapeHtml(error.message), true);
+    }
+  });
+
+  deleteButton.addEventListener("click", async () => {
+    const token = tokenInput.value.trim();
+    if (!token) {
+      show(deleteResult, "请先读取车辆配置。", true);
+      return;
+    }
+    const confirmed = window.confirm("确定删除当前车辆绑定吗？删除后旧二维码和管理链接都会失效。");
+    if (!confirmed) return;
+    show(deleteResult, "正在删除绑定...");
+    try {
+      await request(`/api/owner/${encodeURIComponent(token)}/vehicle`, { method: "DELETE" });
+      regenerateButton.disabled = true;
+      deleteButton.disabled = true;
+      show(status, "车辆绑定已删除。旧二维码已失效。");
+      show(deleteResult, "删除成功。");
+    } catch (error) {
+      show(deleteResult, escapeHtml(error.message), true);
     }
   });
 
