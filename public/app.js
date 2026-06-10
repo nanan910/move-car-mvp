@@ -567,7 +567,23 @@ function setupSetupPage() {
   });
 }
 
+function setupDemoPage() {
+  const flow = document.querySelector("#demoFlow");
+  const replay = document.querySelector("#replayDemoButton");
+  if (!flow || !replay) return;
+
+  function play() {
+    flow.classList.remove("is-playing");
+    void flow.offsetWidth;
+    flow.classList.add("is-playing");
+  }
+
+  replay.addEventListener("click", play);
+  play();
+}
+
 if (page === "bind") setupBindPage();
 if (page === "owner") setupOwnerPage();
 if (page === "move") setupMovePage();
 if (page === "setup") setupSetupPage();
+if (page === "demo") setupDemoPage();
