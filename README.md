@@ -1,5 +1,18 @@
 # 扫码挪车 MVP
 
+## Production notification verification
+
+ShowDoc and WeChat Work robot notifications are both kept. They are independent channels: the visitor page can trigger either channel explicitly, and the one-click button chooses `wechat_work` first, then `showdoc`, then SMS and privacy call when available.
+
+After the Worker is deployed, run this from PowerShell to verify real production notification delivery without pasting secrets into chat:
+
+```powershell
+cd C:\Users\32452\Documents\Codex\2026-06-09\goal-github
+powershell -ExecutionPolicy Bypass -File scripts\verify-production-notifications.ps1
+```
+
+The script asks for `SHOWDOC_WEBHOOK`, optional `SHOWDOC_TOKEN`, and `WECHAT_WORK_WEBHOOK`. Leave one channel empty if you only want to test the other. It creates disposable test bindings, verifies the public visitor API does not leak webhook URLs or tokens, sends a real notification for each configured channel, and checks that repeated notification is rate limited.
+
 一个可演示的匿名扫码挪车项目：车主上传车牌照片完成识别绑定，系统生成车辆专属二维码；访客扫码后一键通知车主，但不会看到车主手机号、微信、ShowDoc token 或完整绑定资料。
 
 ## 在线演示
