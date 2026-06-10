@@ -21,13 +21,13 @@ async function main() {
   }
   if (wechatWorkWebhook) {
     await verifyChannel(apiBase, "wechat_work", {
-      plateNumber: "粤B8WX01",
+      plateNumber: "TESTWX01",
       wechatWorkWebhook,
     });
   }
   if (showdocWebhook) {
     await verifyChannel(apiBase, "showdoc", {
-      plateNumber: "粤B8SD01",
+      plateNumber: "TESTSD01",
       showdocWebhook,
       showdocToken,
     });
@@ -39,40 +39,60 @@ async function main() {
 async function verifyCombinedPublicView(apiBase, payload) {
   console.log("Creating combined ShowDoc + WeChat test binding...");
   const created = await request(apiBase, "POST", "/api/vehicles", {
-    plateNumber: "粤B8ALL1",
+    plateNumber: "TESTALL1",
     ...payload,
   });
-  assert(created.status === 201, `Combined binding should return 201, got ${created.status}: ${JSON.stringify(created.body)}`);
-  assert(created.body.vehicleToken && created.body.ownerToken, "Combined binding should return both public and owner tokens.");
 
-  const publicVehicle = await request(apiBase, "GET", `/api/vehicles/${encodeURIComponent(created.body.vehicleToken)}/public`);
-  assert(publicVehicle.status === 200, `Public vehicle should return 200, got ${publicVehicle.status}`);
-  const text = JSON.stringify(publicVehicle.body);
-  assert(publicVehicle.body.availableChannels.includes("wechat_work"), "Public view should expose the WeChat channel name.");
-  assert(publicVehicle.body.availableChannels.includes("showdoc"), "Public view should expose the ShowDoc channel name.");
-  assert(!text.includes(payload.wechatWorkWebhook), "Public view must not leak the WeChat webhook.");
-  assert(!text.includes(payload.showdocWebhook), "Public view must not leak the ShowDoc webhook.");
-  if (payload.showdocToken) assert(!text.includes(payload.showdocToken), "Public view must not leak the ShowDoc token.");
-  console.log(`Combined binding ok. Owner link token starts with: ${created.body.ownerToken.slice(0, 8)}...`);
+  try {
+    assert(created.status === 201, `Combined binding should return 201, got ${created.status}: ${JSON.stringify(created.body)}`);
+    assert(created.body.vehicleToken && created.body.ownerToken, "Combined binding should return both public and owner tokens.");
+
+    const publicVehicle = await request(apiBase, "GET", `/api/vehicles/${encodeURIComponent(created.body.vehicleToken)}/public`);
+    assert(publicVehicle.status === 200, `Public vehicle should return 200, got ${publicVehicle.status}`);
+    const text = JSON.stringify(publicVehicle.body);
+    assert(publicVehicle.body.availableChannels.includes("wechat_work"), "Public view should expose the WeChat channel name.");
+    assert(publicVehicle.body.availableChannels.includes("showdoc"), "Public view should expose the ShowDoc channel name.");
+    assert(!text.includes(payload.wechatWorkWebhook), "Public view must not leak the WeChat webhook.");
+    assert(!text.includes(payload.showdocWebhook), "Public view must not leak the ShowDoc webhook.");
+    if (payload.showdocToken) assert(!text.includes(payload.showdocToken), "Public view must not leak the ShowDoc token.");
+    console.log(`Combined binding ok. Owner link token starts with: ${created.body.ownerToken.slice(0, 8)}...`);
+  } finally {
+    await cleanupBinding(apiBase, created.body?.ownerToken);
+  }
 }
 
 async function verifyChannel(apiBase, channel, payload) {
   console.log(`Creating ${channel} test binding...`);
   const created = await request(apiBase, "POST", "/api/vehicles", payload);
-  assert(created.status === 201, `${channel} binding should return 201, got ${created.status}: ${JSON.stringify(created.body)}`);
 
-  const publicVehicle = await request(apiBase, "GET", `/api/vehicles/${encodeURIComponent(created.body.vehicleToken)}/public`);
-  assert(publicVehicle.status === 200, `${channel} public view should return 200.`);
-  assert(publicVehicle.body.availableChannels.includes(channel), `${channel} should be available on public view.`);
+  try {
+    assert(created.status === 201, `${channel} binding should return 201, got ${created.status}: ${JSON.stringify(created.body)}`);
 
-  console.log(`Sending ${channel} notification...`);
-  const notified = await request(apiBase, "POST", `/api/vehicles/${encodeURIComponent(created.body.vehicleToken)}/notify`, { channel });
-  assert(notified.status === 200, `${channel} notify should return 200, got ${notified.status}: ${JSON.stringify(notified.body)}`);
-  assert(notified.body.channel === channel, `${channel} notify response should echo the selected channel.`);
+    const publicVehicle = await request(apiBase, "GET", `/api/vehicles/${encodeURIComponent(created.body.vehicleToken)}/public`);
+    assert(publicVehicle.status === 200, `${channel} public view should return 200.`);
+    assert(publicVehicle.body.availableChannels.includes(channel), `${channel} should be available on public view.`);
 
-  const limited = await request(apiBase, "POST", `/api/vehicles/${encodeURIComponent(created.body.vehicleToken)}/notify`, { channel });
-  assert(limited.status === 429, `${channel} second notify should be rate limited, got ${limited.status}.`);
-  console.log(`${channel} notification ok and rate limit verified.`);
+    console.log(`Sending ${channel} notification...`);
+    const notified = await request(apiBase, "POST", `/api/vehicles/${encodeURIComponent(created.body.vehicleToken)}/notify`, { channel });
+    assert(notified.status === 200, `${channel} notify should return 200, got ${notified.status}: ${JSON.stringify(notified.body)}`);
+    assert(notified.body.channel === channel, `${channel} notify response should echo the selected channel.`);
+
+    const limited = await request(apiBase, "POST", `/api/vehicles/${encodeURIComponent(created.body.vehicleToken)}/notify`, { channel });
+    assert(limited.status === 429, `${channel} second notify should be rate limited, got ${limited.status}.`);
+    console.log(`${channel} notification ok and rate limit verified.`);
+  } finally {
+    await cleanupBinding(apiBase, created.body?.ownerToken);
+  }
+}
+
+async function cleanupBinding(apiBase, ownerToken) {
+  if (!ownerToken) return;
+  const deleted = await request(apiBase, "DELETE", `/api/owner/${encodeURIComponent(ownerToken)}/vehicle`);
+  if (deleted.status === 200 || deleted.status === 404) {
+    console.log(`Cleaned test binding ${ownerToken.slice(0, 8)}...`);
+    return;
+  }
+  console.warn(`Could not clean test binding ${ownerToken.slice(0, 8)}...: HTTP ${deleted.status}`);
 }
 
 async function request(apiBase, method, path, body) {
