@@ -184,6 +184,23 @@ button:disabled {
   padding-left: 22px;
 }
 
+.command-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.command {
+  background: #162033;
+  border-radius: 8px;
+  color: #f8fafc;
+  font: 13px/1.6 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  margin: 8px 0 0;
+  overflow-x: auto;
+  padding: 14px;
+  white-space: pre-wrap;
+}
+
 .form-note {
   color: var(--muted);
   font-size: 13px;
