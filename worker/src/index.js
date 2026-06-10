@@ -335,8 +335,8 @@ function defaultNotifyChannel(vehicle) {
 async function sendShowDoc(vehicle, env) {
   const token = vehicle.showdoc_token_encrypted ? await decryptText(env, vehicle.showdoc_token_encrypted) : "";
   const body = new URLSearchParams({
-    title: "Move car reminder",
-    content: `Vehicle ${vehicle.plate_number_masked} received a move-car reminder. Please handle it soon.`,
+    title: "扫码挪车提醒",
+    content: `车辆 ${vehicle.plate_number_masked} 收到挪车提醒，请及时处理。`,
   });
   if (token) body.set("token", token);
   const res = await fetch(vehicle.showdoc_webhook, {
@@ -344,10 +344,10 @@ async function sendShowDoc(vehicle, env) {
     headers: { "Content-Type": "application/x-www-form-urlencoded; charset=utf-8" },
     body,
   });
-  if (!res.ok) throw new Error(`ShowDoc notification failed: ${res.status}`);
+  if (!res.ok) throw new Error(`ShowDoc 通知失败：${res.status}`);
   const data = await res.json().catch(() => null);
   if (data && typeof data.error_code !== "undefined" && Number(data.error_code) !== 0) {
-    throw new Error(`ShowDoc notification failed: ${data.error_message || data.error_code}`);
+    throw new Error(`ShowDoc 通知失败：${data.error_message || data.error_code}`);
   }
 }
 
