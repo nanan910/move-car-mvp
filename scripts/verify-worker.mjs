@@ -129,7 +129,7 @@ async function main() {
     const showdocCalls = sentWebhooks.filter((item) => item.kind === "showdoc");
     assert(showdocCalls.length === 1, "ShowDoc webhook should be called once");
     assert(showdocCalls[0].token === "private-showdoc-token", "ShowDoc token should only be sent server-side");
-    assert(showdocCalls[0].title === "Move car reminder", "ShowDoc should receive a push title");
+    assert(showdocCalls[0].title === "扫码挪车提醒", "ShowDoc should receive a push title");
     assert(showdocCalls[0].content?.includes(created.body.maskedPlate), "ShowDoc should receive the masked plate in content");
     assert(showdocCalls[0].contentType.includes("application/x-www-form-urlencoded"), "ShowDoc should receive form-encoded data");
 
