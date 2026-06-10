@@ -3,7 +3,7 @@ param(
   [string]$Branch = "main",
   [Parameter(Mandatory = $true)]
   [string]$Message,
-  [Parameter(Mandatory = $true, ValueFromRemainingArguments = $true)]
+  [Parameter(Mandatory = $true)]
   [string[]]$Files
 )
 
@@ -20,8 +20,12 @@ if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
 }
 
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+$normalizedFiles = @($Files) + @($args) |
+  ForEach-Object { $_ -split "," } |
+  ForEach-Object { $_.Trim() } |
+  Where-Object { $_ }
 
-foreach ($path in $Files) {
+foreach ($path in $normalizedFiles) {
   if (-not (Test-Path -LiteralPath $path)) {
     throw "File not found: $path"
   }
