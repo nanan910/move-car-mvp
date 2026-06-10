@@ -3,37 +3,36 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>扫码挪车 - 通知车主</title>
+    <title>扫码挪车 - 联系车主</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body data-page="move">
     <header class="topbar">
       <a class="brand" href="./index.html">扫码挪车</a>
       <nav>
-        <a href="./demo.html">????</a>
-        <a href="./setup.html">部署检查</a>
+        <a href="./index.html">生成二维码</a>
         <a href="./privacy.html">隐私说明</a>
       </nav>
     </header>
 
     <main class="shell compact">
       <section class="panel intro">
-        <p class="eyebrow">匿名挪车提醒</p>
+        <p class="eyebrow">扫码联系车主</p>
         <h1>需要车主挪车？</h1>
-        <p>你可以一键发送提醒。系统不会向你展示车主手机号、微信或其他隐私信息。</p>
+        <p>你可以直接拨号、发短信，或复制提醒文案联系车主。这个页面不依赖后端服务。</p>
       </section>
 
       <section class="panel">
         <h2>车辆信息</h2>
         <div id="publicVehicle" class="result">正在读取二维码信息...</div>
-        <button class="primary-action" data-auto-notify type="button" disabled>一键通知车主</button>
-        <div class="actions">
-          <button data-channel="wechat_work">微信通知</button>
-          <button data-channel="showdoc">ShowDoc 通知</button>
-          <button data-channel="sms">短信提醒</button>
-          <button data-channel="privacy_call">隐私号呼叫</button>
+        <div class="actions actions-2">
+          <button id="callButton" type="button">拨打电话</button>
+          <button id="smsButton" type="button">发送短信</button>
+          <button id="copyButton" type="button">复制提醒文案</button>
+          <button id="wechatButton" type="button">复制微信号</button>
+          <button id="customLinkButton" type="button">打开自定义联系页</button>
         </div>
-        <div id="notifyResult" class="result hidden"></div>
+        <div id="contactResult" class="result hidden"></div>
       </section>
     </main>
 
