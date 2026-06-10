@@ -158,6 +158,14 @@ async function main() {
     });
     assert(patch.status === 200, "owner patch should return 200");
 
+    const deleted = await call("DELETE", `/api/owner/${created.body.ownerToken}/vehicle`);
+    assert(deleted.status === 200, "owner delete should return 200");
+    const deletedPublicVehicle = await call("GET", `/api/vehicles/${regenerated.body.vehicleToken}/public`);
+    assert(deletedPublicVehicle.status === 404, "deleted vehicle token should stop working");
+    const deletedOwner = await call("GET", `/api/owner/${created.body.ownerToken}/vehicle`);
+    assert(deletedOwner.status === 404, "deleted owner token should stop working");
+    assert(db.logs.every((item) => item.vehicle_id !== 1), "delete should remove notification logs for the vehicle");
+
     console.log("Worker verification passed.");
   } finally {
     globalThis.fetch = originalFetch;
@@ -295,6 +303,18 @@ class FakeStatement {
         const column = assignment.split(" = ")[0];
         vehicle[column] = this.values[index];
       });
+      return { success: true };
+    }
+
+    if (this.sql === "DELETE FROM notification_logs WHERE vehicle_id = ?") {
+      const [vehicleId] = this.values;
+      this.db.logs = this.db.logs.filter((item) => item.vehicle_id !== vehicleId);
+      return { success: true };
+    }
+
+    if (this.sql === "DELETE FROM vehicles WHERE id = ?") {
+      const [id] = this.values;
+      this.db.vehicles = this.db.vehicles.filter((item) => item.id !== id);
       return { success: true };
     }
 
