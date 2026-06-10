@@ -3,86 +3,69 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>扫码挪车 - 车主绑定</title>
+    <title>扫码挪车 - 免费静态版</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body data-page="bind">
     <header class="topbar">
       <a class="brand" href="./index.html">扫码挪车</a>
       <nav>
-        <a href="./index.html">车主绑定</a>
-        <a href="./owner.html">车主管理</a>
-        <a href="./demo.html">????</a>
-        <a href="./setup.html">部署检查</a>
+        <a href="./index.html">生成二维码</a>
+        <a href="./demo.html">流程演示</a>
+        <a href="./setup.html">使用说明</a>
         <a href="./privacy.html">隐私说明</a>
       </nav>
     </header>
 
     <main class="shell">
       <section class="panel intro">
-        <p class="eyebrow">匿名通知 · 隐私保护 · GitHub Pages + Cloudflare</p>
-        <h1>上传车牌照片，生成专属挪车二维码</h1>
-        <p>
-          访客扫码后只能发送提醒，不能看到你的手机号、微信、ShowDoc 配置或完整绑定资料。
-        </p>
+        <p class="eyebrow">完全免费 · 纯静态 · 国内可访问</p>
+        <h1>本地生成扫码挪车二维码</h1>
+        <p>这个版本不依赖后端。车主在浏览器里填写车牌和联系方式后，页面直接生成访客扫码链接与二维码。</p>
       </section>
 
       <section class="panel">
-        <h2>1. 识别车牌</h2>
+        <h2>1. 本地预览车牌照片</h2>
         <form id="ocrForm" class="stack">
           <label>
-            API 地址
-            <input id="apiBase" name="apiBase" placeholder="https://your-worker.example.workers.dev" />
-          </label>
-          <label>
             车牌照片
-            <input id="plateImage" name="plateImage" type="file" accept="image/*" required />
+            <input id="plateImage" name="plateImage" type="file" accept="image/*" />
           </label>
-          <button type="submit">上传并识别</button>
+          <button type="submit">预览并继续手动确认</button>
         </form>
         <div id="ocrResult" class="result hidden"></div>
       </section>
 
       <section class="panel">
-        <h2>2. 绑定通知配置</h2>
+        <h2>2. 生成联系二维码</h2>
         <form id="bindForm" class="grid-form">
           <label>
-            确认车牌
-            <input id="plateNumber" name="plateNumber" placeholder="例如 粤B12345" required />
-          </label>
-          <label>
-            ShowDoc Webhook
-            <input id="showdocWebhook" name="showdocWebhook" placeholder="https://..." inputmode="url" />
-          </label>
-          <label>
-            ShowDoc Token
-            <input id="showdocToken" name="showdocToken" type="password" placeholder="可选" />
-          </label>
-          <label>
-            企业微信群机器人 Webhook
-            <input id="wechatWorkWebhook" name="wechatWorkWebhook" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..." inputmode="url" />
+            车牌号
+            <input id="plateNumber" name="plateNumber" placeholder="例如 粤A12345" required />
           </label>
           <label>
             车主手机号
-            <input id="ownerPhone" name="ownerPhone" inputmode="tel" placeholder="仅服务端加密保存" />
+            <input id="ownerPhone" name="ownerPhone" inputmode="tel" placeholder="用于拨号或短信" />
           </label>
           <label>
-            短信通知
-            <select id="smsEnabled" name="smsEnabled">
-              <option value="false">暂不启用</option>
-              <option value="true">启用</option>
-            </select>
+            车主微信号
+            <input id="wechatId" name="wechatId" placeholder="可选，用于复制联系" />
           </label>
           <label>
-            隐私号呼叫
-            <select id="privacyCallEnabled" name="privacyCallEnabled">
-              <option value="false">暂不启用</option>
-              <option value="true">启用</option>
-            </select>
+            自定义联系链接
+            <input id="customLink" name="customLink" placeholder="可选，例如企业微信客服链接" />
           </label>
-          <button type="submit">创建绑定并生成二维码</button>
+          <label class="span-2">
+            提醒文案
+            <textarea id="smsText" name="smsText" rows="4" placeholder="留空则使用默认提醒文案"></textarea>
+          </label>
+          <label class="span-2">
+            备注
+            <textarea id="note" name="note" rows="3" placeholder="例如：请说明车辆所在位置"></textarea>
+          </label>
+          <button type="submit">生成二维码和访客链接</button>
         </form>
-        <p class="form-note">手机号仅在服务端加密保存；访客扫码页面不会显示手机号、ShowDoc webhook 或 token。</p>
+        <p class="form-note">提醒：静态免费版不会把信息发到服务器，但二维码中的联系配置不适合保存高度敏感信息。</p>
         <div id="bindResult" class="result hidden"></div>
       </section>
     </main>
