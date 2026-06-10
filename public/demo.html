@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>扫码挪车 - 流程演示</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body data-page="demo">
+    <header class="topbar">
+      <a class="brand" href="./index.html">扫码挪车</a>
+      <nav>
+        <a href="./index.html">车主绑定</a>
+        <a href="./owner.html">车主管理</a>
+        <a href="./demo.html">流程演示</a>
+        <a href="./setup.html">部署检查</a>
+        <a href="./privacy.html">隐私说明</a>
+      </nav>
+    </header>
+
+    <main class="shell">
+      <section class="panel intro">
+        <p class="eyebrow">演示动画</p>
+        <h1>从扫码到通知车主的完整过程</h1>
+        <p>这个页面只做演示，不会真实发送通知。适合快速说明：访客扫车内二维码，系统匿名转发提醒，车主通过企业微信或 ShowDoc 收到消息。</p>
+      </section>
+
+      <section class="panel demo-stage">
+        <div class="demo-toolbar">
+          <button id="replayDemoButton" type="button">重新播放</button>
+        </div>
+
+        <div id="demoFlow" class="demo-flow">
+          <section class="demo-column">
+            <div class="demo-card">
+              <span class="demo-badge">访客</span>
+              <h2>扫码发起挪车</h2>
+              <div class="demo-qr">
+                <div class="demo-qr-grid"></div>
+              </div>
+              <p>访客只看到脱敏车牌和提醒按钮，看不到手机号、微信号或任何 webhook。</p>
+              <div class="demo-bubble demo-step" style="--delay: 0s;">扫描二维码</div>
+              <div class="demo-bubble demo-step" style="--delay: 0.9s;">点击“一键通知车主”</div>
+            </div>
+          </section>
+
+          <section class="demo-column demo-column-center">
+            <div class="demo-card">
+              <span class="demo-badge">Worker</span>
+              <h2>匿名转发提醒</h2>
+              <div class="demo-server demo-step" style="--delay: 1.8s;">
+                <div class="demo-server-lights">
+                  <i></i><i></i><i></i>
+                </div>
+                <strong>Cloudflare Worker</strong>
+                <small>校验 vehicleToken、记录日志、限流、选择通知通道</small>
+              </div>
+              <div class="demo-shield demo-step" style="--delay: 2.6s;">
+                <strong>隐私保护</strong>
+                <span>车主手机号、ShowDoc token、企业微信 webhook 只在服务端使用</span>
+              </div>
+            </div>
+            <div class="demo-beam demo-step" style="--delay: 3.4s;"></div>
+          </section>
+
+          <section class="demo-column">
+            <div class="demo-card">
+              <span class="demo-badge">车主</span>
+              <h2>接收提醒</h2>
+              <div class="demo-phone demo-step" style="--delay: 4.2s;">
+                <div class="demo-phone-screen">
+                  <p class="demo-phone-title">扫码挪车提醒</p>
+                  <div class="demo-message demo-step" style="--delay: 4.8s;">
+                    企业微信：车辆 粤B***45 收到挪车提醒，请及时处理。
+                  </div>
+                  <div class="demo-message demo-step" style="--delay: 5.6s;">
+                    ShowDoc：车辆 粤B***45 收到挪车提醒，请及时处理。
+                  </div>
+                </div>
+              </div>
+              <div class="demo-bubble demo-step" style="--delay: 6.4s;">车主收到提醒后自行挪车</div>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script src="./config.js"></script>
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
