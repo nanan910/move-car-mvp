@@ -278,14 +278,12 @@ git push -u origin main
 
 ## ShowDoc 通知
 
-ShowDoc 通知按“服务端 POST 到用户提供的 webhook/API 地址”实现。它不是必填项；车主可以只配置微信通知，也可以同时配置 ShowDoc 和微信通知。填写 ShowDoc webhook 和可选 token 后，Worker 会发送如下 JSON：
+ShowDoc 通知按“服务端 POST 到 ShowDoc 推送服务地址”实现。它不是必填项；车主可以只配置微信通知，也可以同时配置 ShowDoc 和微信通知。填写 ShowDoc webhook 和可选 token 后，Worker 会以 `application/x-www-form-urlencoded` 发送如下字段：
 
-```json
-{
-  "title": "扫码挪车提醒",
-  "content": "车辆 粤B***45 收到挪车提醒，请及时处理。",
-  "token": "optional-token"
-}
+```text
+title=Move car reminder
+content=Vehicle 粤B***45 received a move-car reminder. Please handle it soon.
+token=optional-token
 ```
 
 如果你的 ShowDoc 接口字段不同，只需要调整 `worker/src/index.js` 中的 `sendShowDoc`。
