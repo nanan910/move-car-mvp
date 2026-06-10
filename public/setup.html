@@ -39,17 +39,17 @@
 
       <section class="panel">
         <h2>最后上线验收命令</h2>
-        <p class="form-note">不要把密钥或 webhook 发到聊天里。下面命令在你的 PowerShell 本机运行，脚本会在终端里提示你粘贴敏感值。</p>
+        <p class="form-note">腾讯云 OCR 暂时不接入时，可以跳过 OCR 密钥；先验收真实通知。不要把密钥或 webhook 发到聊天里。</p>
         <div class="command-list">
           <div>
-            <strong>1. 切换到真实腾讯云 OCR</strong>
-            <pre class="command">cd C:\Users\32452\Documents\Codex\2026-06-09\goal-github
-powershell -ExecutionPolicy Bypass -File scripts\promote-production.ps1</pre>
-          </div>
-          <div>
-            <strong>2. 验证 ShowDoc + 微信真实通知</strong>
+            <strong>1. 验证 ShowDoc + 微信真实通知</strong>
             <pre class="command">cd C:\Users\32452\Documents\Codex\2026-06-09\goal-github
 powershell -ExecutionPolicy Bypass -File scripts\verify-production-notifications.ps1</pre>
+          </div>
+          <div>
+            <strong>2. 可选：以后再切换到真实腾讯云 OCR</strong>
+            <pre class="command">cd C:\Users\32452\Documents\Codex\2026-06-09\goal-github
+powershell -ExecutionPolicy Bypass -File scripts\promote-production.ps1</pre>
           </div>
         </div>
       </section>
@@ -60,7 +60,7 @@ powershell -ExecutionPolicy Bypass -File scripts\verify-production-notifications
           <li>GitHub Pages 已启用，并能访问静态前端。</li>
           <li>Cloudflare D1 已创建，`worker/wrangler.toml` 已填写真实 `database_id`。</li>
           <li>GitHub Actions secrets 已添加 `CLOUDFLARE_API_TOKEN` 和 `CLOUDFLARE_ACCOUNT_ID`。</li>
-          <li>Worker secrets 已设置 `DATA_ENCRYPTION_KEY`、腾讯云 OCR 密钥、通知相关密钥。</li>
+          <li>Worker secrets 已设置 `DATA_ENCRYPTION_KEY`、`IP_HASH_SALT`；腾讯云 OCR 密钥是可选项。</li>
           <li>`public/config.js` 已填写 Worker API 地址，并将 demo 模式关闭。</li>
         </ul>
       </section>
