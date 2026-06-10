@@ -4,6 +4,18 @@ Base URL is the deployed Cloudflare Worker URL. GitHub Pages reads it from `publ
 
 All responses are JSON. Visitor-facing APIs must never return owner phone numbers, ShowDoc webhook URLs, ShowDoc tokens, Tencent Cloud credentials, privacy-call tokens, or full owner configuration.
 
+## `DELETE /api/owner/:ownerToken/vehicle`
+
+Deletes one owner-managed vehicle binding and its notification logs. This is intended for owner cleanup and production smoke-test cleanup. The endpoint requires the `ownerToken`; a `vehicleToken` cannot delete or manage a binding.
+
+Response:
+
+```json
+{
+  "message": "绑定已删除。"
+}
+```
+
 ## `GET /api/health`
 
 Checks backend configuration.
