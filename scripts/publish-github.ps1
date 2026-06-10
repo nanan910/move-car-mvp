@@ -32,4 +32,4 @@ gh repo create $RepoName $visibilityFlag --source=. --remote=origin --push
 
 Write-Host ""
 Write-Host "Published to GitHub repository: $RepoName"
-Write-Host "Next: enable GitHub Pages with GitHub Actions, then configure Cloudflare secrets and D1 database_id."
+Write-Host "Next: enable GitHub Pages with GitHub Actions, then share the static site URL."
