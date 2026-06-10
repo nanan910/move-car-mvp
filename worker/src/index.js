@@ -29,6 +29,7 @@ function matchRoute(method, pathname) {
     ["POST", /^\/api\/vehicles\/([^/]+)\/notify$/, handleNotify, ["vehicleToken"]],
     ["GET", /^\/api\/owner\/([^/]+)\/vehicle$/, handleOwnerVehicle, ["ownerToken"]],
     ["PATCH", /^\/api\/owner\/([^/]+)\/vehicle$/, handlePatchOwnerVehicle, ["ownerToken"]],
+    ["DELETE", /^\/api\/owner\/([^/]+)\/vehicle$/, handleDeleteOwnerVehicle, ["ownerToken"]],
     ["POST", /^\/api\/owner\/([^/]+)\/vehicle\/regenerate-token$/, handleRegenerateVehicleToken, ["ownerToken"]],
   ];
   for (const [routeMethod, pattern, handler, keys = []] of routes) {
@@ -66,7 +67,7 @@ function handleHealth({ env }) {
 function cors(response, env) {
   const headers = new Headers(response.headers);
   headers.set("Access-Control-Allow-Origin", env.CORS_ORIGIN || "*");
-  headers.set("Access-Control-Allow-Methods", "GET,POST,PATCH,OPTIONS");
+  headers.set("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS");
   headers.set("Access-Control-Allow-Headers", "Content-Type");
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
@@ -298,6 +299,15 @@ async function handleRegenerateVehicleToken({ env, params }) {
     .bind(vehicleToken, nowIso(), vehicle.id)
     .run();
   return json({ vehicleToken, maskedPlate: vehicle.plate_number_masked });
+}
+
+async function handleDeleteOwnerVehicle({ env, params }) {
+  assertConfig(env, ["DB"]);
+  const vehicle = await getVehicleByOwnerToken(env, params.ownerToken);
+  if (!vehicle) return json({ error: "not_found", message: "管理链接无效。" }, 404);
+  await env.DB.prepare("DELETE FROM notification_logs WHERE vehicle_id = ?").bind(vehicle.id).run();
+  await env.DB.prepare("DELETE FROM vehicles WHERE id = ?").bind(vehicle.id).run();
+  return json({ message: "绑定已删除。" });
 }
 
 async function getVehicleByToken(env, vehicleToken) {
