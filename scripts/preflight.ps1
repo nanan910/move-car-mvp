@@ -50,6 +50,7 @@ Invoke-Checked $NodePath @("--check", "scripts/serve-public.mjs")
 Invoke-Checked $NodePath @("--check", "scripts/mock-api.mjs")
 Invoke-Checked $NodePath @("--check", "scripts/verify-mvp.mjs")
 Invoke-Checked $NodePath @("--check", "scripts/verify-worker.mjs")
+Invoke-Checked $NodePath @("--check", "scripts/verify-production-notifications.mjs")
 
 Write-Step "Running MVP verification"
 Invoke-Checked $NodePath @("scripts/verify-mvp.mjs")
@@ -63,6 +64,7 @@ $powerShellScripts = @(
   "scripts/set-worker-secrets.ps1",
   "scripts/set-ocr-secrets.ps1",
   "scripts/promote-production.ps1",
+  "scripts/verify-production-notifications.ps1",
   "scripts/check-production.ps1"
 )
 foreach ($script in $powerShellScripts) {
