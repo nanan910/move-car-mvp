@@ -129,6 +129,9 @@ async function main() {
     const showdocCalls = sentWebhooks.filter((item) => item.kind === "showdoc");
     assert(showdocCalls.length === 1, "ShowDoc webhook should be called once");
     assert(showdocCalls[0].token === "private-showdoc-token", "ShowDoc token should only be sent server-side");
+    assert(showdocCalls[0].title === "Move car reminder", "ShowDoc should receive a push title");
+    assert(showdocCalls[0].content?.includes(created.body.maskedPlate), "ShowDoc should receive the masked plate in content");
+    assert(showdocCalls[0].contentType.includes("application/x-www-form-urlencoded"), "ShowDoc should receive form-encoded data");
 
     const limited = await call("POST", `/api/vehicles/${created.body.vehicleToken}/notify`, { channel: "showdoc" });
     assert(limited.status === 429, "second notify should be rate limited");
@@ -185,8 +188,15 @@ function mockFetch(webhookCalls) {
   return async (input, init) => {
     const url = String(input);
     if (url.startsWith("https://showdoc.example/")) {
-      webhookCalls.push({ kind: "showdoc", ...JSON.parse(init?.body || "{}") });
-      return new Response(JSON.stringify({ ok: true }), { status: 200 });
+      const form = new URLSearchParams(String(init?.body || ""));
+      webhookCalls.push({
+        kind: "showdoc",
+        title: form.get("title"),
+        content: form.get("content"),
+        token: form.get("token"),
+        contentType: init?.headers?.["Content-Type"] || init?.headers?.get?.("Content-Type") || "",
+      });
+      return new Response(JSON.stringify({ error_code: 0, error_message: "ok" }), { status: 200 });
     }
     if (url.startsWith("https://qyapi.weixin.qq.com/")) {
       webhookCalls.push({ kind: "wechat_work", ...JSON.parse(init?.body || "{}") });
