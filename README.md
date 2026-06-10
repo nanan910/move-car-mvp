@@ -20,7 +20,7 @@ If normal `git push` fails because SSH authentication is unavailable, use the AP
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\sync-github-api.ps1 `
   -Message "Update files" `
-  -Files public/app.js public/setup.html
+  -Files public/app.js,public/setup.html
 ```
 
 It uploads the listed files to `nanan910/move-car-mvp` on `main` through `gh api`.
