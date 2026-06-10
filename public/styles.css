@@ -99,6 +99,15 @@ p {
   margin: 0;
 }
 
+textarea {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+  min-height: 44px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
 .stack,
 .grid-form {
   display: grid;
@@ -107,6 +116,10 @@ p {
 
 .grid-form {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.span-2 {
+  grid-column: 1 / -1;
 }
 
 label {
@@ -148,6 +161,14 @@ button:disabled {
   gap: 12px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 18px;
+}
+
+.actions-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.actions-single {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .primary-action {
@@ -205,6 +226,10 @@ button:disabled {
   color: var(--muted);
   font-size: 13px;
   margin-top: 12px;
+}
+
+.muted {
+  color: var(--muted);
 }
 
 .result.error {
@@ -280,6 +305,16 @@ button:disabled {
 
 .move-card small {
   color: var(--muted);
+}
+
+.payload-box {
+  width: 100%;
+}
+
+.payload-box summary {
+  cursor: pointer;
+  font-weight: 700;
+  margin-bottom: 10px;
 }
 
 .demo-stage {
