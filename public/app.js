@@ -1,24 +1,10 @@
 const params = new URLSearchParams(location.search);
 const page = document.body.dataset.page;
-
-const DEFAULT_API_BASE = localStorage.getItem("moveCarApiBase") || window.MOVE_CAR_API_BASE || "";
-const DEMO_MODE = Boolean(window.MOVE_CAR_DEMO_MODE);
-const DEMO_STORAGE_KEY = "moveCarDemoState";
-const MAX_OCR_IMAGE_BYTES = 4 * 1024 * 1024;
-
-function apiBase() {
-  const input = document.querySelector("#apiBase");
-  const value = (input?.value || DEFAULT_API_BASE).trim().replace(/\/$/, "");
-  if (value) localStorage.setItem("moveCarApiBase", value);
-  return value;
-}
-
-function setApiInput() {
-  const input = document.querySelector("#apiBase");
-  if (input && DEFAULT_API_BASE) input.value = DEFAULT_API_BASE;
-}
+const CONFIG_PARAM = "d";
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 
 function show(el, html, error = false) {
+  if (!el) return;
   el.classList.remove("hidden", "error");
   if (error) el.classList.add("error");
   el.innerHTML = html;
@@ -33,232 +19,128 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-async function request(path, options = {}) {
-  const base = apiBase();
-  if (!base && DEMO_MODE) return demoRequest(path, options);
-  if (!base) throw new Error("请先填写 Cloudflare Worker API 地址。");
-  const res = await fetch(`${base}${path}`, options);
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.message || data.error || `请求失败：${res.status}`);
-  return data;
-}
-
-async function demoRequest(path, options = {}) {
-  await new Promise((resolve) => setTimeout(resolve, 180));
-  const method = options.method || "GET";
-  const state = loadDemoState();
-
-  if (method === "POST" && path === "/api/ocr/plate") {
-    return {
-      plateNumber: "粤B12345",
-      candidates: [{ plateNumber: "粤B12345", color: "blue" }],
-      demo: true,
-    };
-  }
-
-  if (method === "POST" && path === "/api/vehicles") {
-    const input = JSON.parse(options.body || "{}");
-    if (!input.plateNumber) throw new Error("请确认车牌号。");
-    if (!hasNotificationChannel(input)) throw new Error("请至少配置一种通知方式。");
-    const vehicleToken = demoToken("veh");
-    const ownerToken = demoToken("own");
-    state.vehicles.push({
-      vehicleToken,
-      ownerToken,
-      maskedPlate: maskPlate(input.plateNumber),
-      showdocEnabled: Boolean(input.showdocWebhook),
-      wechatWorkEnabled: Boolean(input.wechatWorkWebhook),
-      smsEnabled: Boolean(input.smsEnabled && input.ownerPhone),
-      privacyCallEnabled: Boolean(input.privacyCallEnabled && input.ownerPhone),
-      createdAt: new Date().toISOString(),
-    });
-    saveDemoState(state);
-    return { vehicleToken, ownerToken, maskedPlate: maskPlate(input.plateNumber), demo: true };
-  }
-
-  let match = path.match(/^\/api\/vehicles\/([^/]+)\/public$/);
-  if (method === "GET" && match) {
-    const vehicle = findDemoVehicle(state, match[1], "vehicleToken");
-    if (!vehicle) throw new Error("车辆不存在。演示模式数据只保存在当前浏览器。");
-    return { maskedPlate: vehicle.maskedPlate, availableChannels: demoChannels(vehicle), demo: true };
-  }
-
-  match = path.match(/^\/api\/vehicles\/([^/]+)\/notify$/);
-  if (method === "POST" && match) {
-    const vehicle = findDemoVehicle(state, match[1], "vehicleToken");
-    if (!vehicle) throw new Error("车辆不存在。");
-    const input = JSON.parse(options.body || "{}");
-    const channels = demoChannels(vehicle);
-    const channel = input.channel || ["wechat_work", "showdoc", "sms", "privacy_call"].find((item) => channels.includes(item));
-    if (!demoChannels(vehicle).includes(channel)) throw new Error("该通知方式尚未配置。");
-    const recent = state.logs.find(
-      (log) => log.vehicleToken === vehicle.vehicleToken && Date.now() - log.time < 120000
-    );
-    if (recent) throw new Error("已提醒车主，请勿频繁操作。");
-    state.logs.push({
-      vehicleToken: vehicle.vehicleToken,
-      channel,
-      status: "sent",
-      time: Date.now(),
-    });
-    saveDemoState(state);
-    return { message: `演示模式：已模拟发送 ${channel} 通知。`, demo: true };
-  }
-
-  match = path.match(/^\/api\/owner\/([^/]+)\/vehicle$/);
-  if (match) {
-    const vehicle = findDemoVehicle(state, match[1], "ownerToken");
-    if (!vehicle) throw new Error("管理链接无效。");
-    if (method === "GET") {
-      return {
-        vehicleToken: vehicle.vehicleToken,
-        maskedPlate: vehicle.maskedPlate,
-        showdocEnabled: vehicle.showdocEnabled,
-        wechatWorkEnabled: vehicle.wechatWorkEnabled,
-        smsEnabled: vehicle.smsEnabled,
-        privacyCallEnabled: vehicle.privacyCallEnabled,
-        recentNotifications: state.logs
-          .filter((log) => log.vehicleToken === vehicle.vehicleToken)
-          .map((log) => ({ channel: log.channel, status: log.status, created_at: new Date(log.time).toISOString() })),
-        demo: true,
-      };
-    }
-    if (method === "DELETE") {
-      state.vehicles = state.vehicles.filter((item) => item.ownerToken !== vehicle.ownerToken);
-      state.logs = state.logs.filter((log) => log.vehicleToken !== vehicle.vehicleToken);
-      saveDemoState(state);
-      return { message: "演示模式：绑定已删除。", demo: true };
-    }
-    if (method === "PATCH") {
-      const input = JSON.parse(options.body || "{}");
-      if (input.showdocWebhook) vehicle.showdocEnabled = true;
-      if (input.wechatWorkWebhook) vehicle.wechatWorkEnabled = true;
-      if (typeof input.smsEnabled === "boolean") vehicle.smsEnabled = input.smsEnabled;
-      if (typeof input.privacyCallEnabled === "boolean") vehicle.privacyCallEnabled = input.privacyCallEnabled;
-      saveDemoState(state);
-      return { message: "演示模式：配置已更新。", demo: true };
-    }
-  }
-
-  throw new Error("演示模式暂不支持该接口。");
-}
-
-function loadDemoState() {
-  try {
-    return JSON.parse(localStorage.getItem(DEMO_STORAGE_KEY)) || { vehicles: [], logs: [] };
-  } catch {
-    return { vehicles: [], logs: [] };
-  }
-}
-
-function saveDemoState(state) {
-  localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(state));
-}
-
-function findDemoVehicle(state, token, key) {
-  return state.vehicles.find((vehicle) => vehicle[key] === decodeURIComponent(token));
-}
-
-function demoChannels(vehicle) {
-  return [
-    vehicle.showdocEnabled ? "showdoc" : "",
-    vehicle.wechatWorkEnabled ? "wechat_work" : "",
-    vehicle.smsEnabled ? "sms" : "",
-    vehicle.privacyCallEnabled ? "privacy_call" : "",
-  ].filter(Boolean);
-}
-
-function demoToken(prefix) {
-  const bytes = crypto.getRandomValues(new Uint8Array(12));
-  return `${prefix}_${btoa(String.fromCharCode(...bytes)).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "")}`;
+function normalizePlate(value) {
+  return String(value || "").trim().replace(/\s+/g, "").toUpperCase();
 }
 
 function maskPlate(value) {
-  const plate = String(value || "").trim().replace(/\s+/g, "").toUpperCase();
+  const plate = normalizePlate(value);
   if (plate.length <= 3) return "***";
   return `${plate.slice(0, 2)}***${plate.slice(-2)}`;
 }
 
-function boolValue(form, name) {
-  const value = new FormData(form).get(name);
-  if (value === "") return undefined;
-  return value === "true";
-}
-
-function validatePlateNumber(value) {
-  const plate = String(value || "").trim().replace(/\s+/g, "").toUpperCase();
+function validatePlate(value) {
+  const plate = normalizePlate(value);
   if (!/^[\u4e00-\u9fa5A-Z0-9]{5,10}$/.test(plate)) {
-    throw new Error("请填写有效车牌号，长度建议 5-10 位。");
+    throw new Error("请输入有效车牌号。");
   }
   return plate;
 }
 
-function validateHttpUrl(value, label) {
-  try {
-    const url = new URL(value);
-    if (!["http:", "https:"].includes(url.protocol)) throw new Error();
-    return url.toString();
-  } catch {
-    throw new Error(`${label} 必须是 http 或 https 地址。`);
-  }
-}
-
-function validatePhone(value, required) {
-  const phone = String(value || "").trim();
+function validatePhone(value, required = false) {
+  const phone = String(value || "").trim().replace(/[\s-]/g, "");
   if (!phone && !required) return "";
-  if (!/^\+?\d[\d\s-]{6,19}$/.test(phone)) {
-    throw new Error("请填写有效手机号，或关闭短信/隐私号通知。");
+  if (!/^\+?\d{7,20}$/.test(phone)) {
+    throw new Error("请输入有效手机号。");
   }
-  return phone.replace(/[\s-]/g, "");
-}
-
-function hasNotificationChannel(payload) {
-  return Boolean(payload.showdocWebhook || payload.wechatWorkWebhook || payload.smsEnabled || payload.privacyCallEnabled);
+  return phone;
 }
 
 function validateImageFile(file) {
   if (!file) throw new Error("请先选择车牌照片。");
   if (file.type && !file.type.startsWith("image/")) {
-    throw new Error("请上传 JPG、PNG、HEIC 等图片文件。");
+    throw new Error("请上传图片文件。");
   }
-  if (file.size > MAX_OCR_IMAGE_BYTES) {
-    throw new Error("图片不能超过 4MB，请压缩或重新拍摄后再上传。");
+  if (file.size > MAX_IMAGE_BYTES) {
+    throw new Error("图片不能超过 4MB。");
   }
   return file;
 }
 
-function moveUrl(vehicleToken) {
+function moveUrlFromPayload(payload) {
   const url = new URL("./move.html", location.href);
-  url.searchParams.set("t", vehicleToken);
-  return url.toString();
-}
-
-function ownerUrl(ownerToken) {
-  const url = new URL("./owner.html", location.href);
-  url.searchParams.set("ownerToken", ownerToken);
+  url.searchParams.set(CONFIG_PARAM, encodePayload(payload));
   return url.toString();
 }
 
 function qrImageUrl(text) {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(text)}`;
+  return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(text)}`;
+}
+
+function encodePayload(payload) {
+  const json = JSON.stringify(payload);
+  const bytes = new TextEncoder().encode(json);
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+}
+
+function decodePayload(text) {
+  const base64 = String(text || "").replaceAll("-", "+").replaceAll("_", "/").padEnd(Math.ceil(text.length / 4) * 4, "=");
+  const binary = atob(base64);
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+function copyText(text) {
+  if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(text);
+  const input = document.createElement("textarea");
+  input.value = text;
+  document.body.appendChild(input);
+  input.select();
+  document.execCommand("copy");
+  input.remove();
+  return Promise.resolve();
+}
+
+function buildPayload(form) {
+  const plateNumber = validatePlate(form.plateNumber.value);
+  const ownerPhone = validatePhone(form.ownerPhone.value, false);
+  const smsTextRaw = form.smsText.value.trim();
+  const smsText = smsTextRaw || `您好，您的车辆 ${maskPlate(plateNumber)} 可能影响通行，请尽快挪车，谢谢。`;
+  const note = form.note.value.trim();
+  const wechatId = form.wechatId.value.trim();
+  const customLink = form.customLink.value.trim();
+  return {
+    version: 1,
+    plateNumber,
+    maskedPlate: maskPlate(plateNumber),
+    ownerPhone,
+    smsText,
+    note,
+    wechatId,
+    customLink,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function renderContactSummary(payload) {
+  const lines = [
+    `<strong>${escapeHtml(payload.maskedPlate)}</strong>`,
+    payload.ownerPhone ? `手机号：${escapeHtml(payload.ownerPhone.replace(/^(\+?\d{3})\d+(\d{2})$/, "$1****$2"))}` : "手机号：未填写",
+    payload.wechatId ? `微信号：${escapeHtml(payload.wechatId)}` : "微信号：未填写",
+    payload.note ? `备注：${escapeHtml(payload.note)}` : "备注：无",
+  ];
+  return lines.join("<br>");
 }
 
 function setupBindPage() {
-  setApiInput();
   const ocrForm = document.querySelector("#ocrForm");
   const bindForm = document.querySelector("#bindForm");
   const ocrResult = document.querySelector("#ocrResult");
   const bindResult = document.querySelector("#bindResult");
-  const plateNumber = document.querySelector("#plateNumber");
-  const plateImage = document.querySelector("#plateImage");
+  const plateInput = document.querySelector("#plateNumber");
+  const imageInput = document.querySelector("#plateImage");
   let previewUrl = "";
 
-  plateImage.addEventListener("change", () => {
+  imageInput?.addEventListener("change", () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     previewUrl = "";
-    const file = plateImage.files[0];
+    const file = imageInput.files?.[0];
     if (!file) {
-      ocrResult.classList.add("hidden");
+      ocrResult?.classList.add("hidden");
       return;
     }
     try {
@@ -267,303 +149,156 @@ function setupBindPage() {
       show(
         ocrResult,
         `<img class="plate-preview" src="${previewUrl}" alt="车牌照片预览">
-         <div class="muted">照片仅用于车牌 OCR 识别，Worker 不会保存原图。</div>`
+         <div class="muted">静态版不会上传原图，只做本地预览。请手动确认车牌。</div>`
       );
     } catch (error) {
       show(ocrResult, escapeHtml(error.message), true);
     }
   });
 
-  ocrForm.addEventListener("submit", async (event) => {
+  ocrForm?.addEventListener("submit", (event) => {
     event.preventDefault();
-    const file = plateImage.files[0];
+    const file = imageInput.files?.[0];
     try {
       validateImageFile(file);
-    } catch (error) {
-      show(ocrResult, escapeHtml(error.message), true);
-      return;
-    }
-    const formData = new FormData();
-    formData.set("image", file);
-    show(ocrResult, "正在识别车牌...");
-    try {
-      const data = await request("/api/ocr/plate", { method: "POST", body: formData });
-      const candidate = data.plateNumber || data.candidates?.[0]?.plateNumber || "";
-      if (candidate) plateNumber.value = candidate;
       show(
         ocrResult,
-        `识别结果：<strong>${escapeHtml(candidate || "未识别到车牌")}</strong><br>请人工确认后再绑定。`
+        `<img class="plate-preview" src="${previewUrl}" alt="车牌照片预览">
+         <div>静态免费版不接入在线 OCR，请手动填写或确认车牌号后继续。</div>`
       );
+      plateInput.focus();
     } catch (error) {
       show(ocrResult, escapeHtml(error.message), true);
     }
   });
 
-  bindForm.addEventListener("submit", async (event) => {
+  bindForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
-    const smsEnabled = boolValue(form, "smsEnabled");
-    const privacyCallEnabled = boolValue(form, "privacyCallEnabled");
-    show(bindResult, "正在创建绑定...");
+    show(bindResult, "正在生成二维码...");
     try {
-      const payload = {
-        plateNumber: validatePlateNumber(form.plateNumber.value),
-        showdocWebhook: form.showdocWebhook.value.trim()
-          ? validateHttpUrl(form.showdocWebhook.value.trim(), "ShowDoc Webhook")
-          : "",
-        showdocToken: form.showdocToken.value.trim(),
-        wechatWorkWebhook: form.wechatWorkWebhook.value.trim()
-          ? validateHttpUrl(form.wechatWorkWebhook.value.trim(), "企业微信群机器人 Webhook")
-          : "",
-        ownerPhone: validatePhone(form.ownerPhone.value, smsEnabled || privacyCallEnabled),
-        smsEnabled,
-        privacyCallEnabled,
-      };
-      if (!hasNotificationChannel(payload)) throw new Error("请至少配置 ShowDoc、微信、短信或隐私号中的一种通知方式。");
-      const data = await request("/api/vehicles", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const publicUrl = moveUrl(data.vehicleToken);
-      const manageUrl = ownerUrl(data.ownerToken);
-      const qrUrl = qrImageUrl(publicUrl);
+      const payload = buildPayload(form);
+      if (!payload.ownerPhone && !payload.wechatId && !payload.customLink) {
+        throw new Error("请至少填写一种联系车主的方式。");
+      }
+      const moveUrl = moveUrlFromPayload(payload);
+      const qrUrl = qrImageUrl(moveUrl);
+      const downloadName = `${payload.maskedPlate}-move-car.txt`;
       show(
         bindResult,
         `<div class="qr">
-          <strong>绑定成功</strong>
-          ${data.demo ? "<span>当前为浏览器演示模式：二维码链接只在本浏览器保存了车辆数据。</span>" : ""}
-          <div class="move-card" id="moveCard">
-            <p class="move-card-kicker">扫码挪车</p>
-            <img src="${qrUrl}" alt="挪车二维码" />
-            <strong>${escapeHtml(data.maskedPlate || maskPlate(payload.plateNumber))}</strong>
-            <span>请扫码通知车主挪车</span>
-            <small>不显示手机号 · 不暴露车主信息</small>
+          <strong>生成成功</strong>
+          <div class="move-card">
+            <p class="move-card-kicker">扫码联系车主</p>
+            <img src="${qrUrl}" alt="挪车二维码">
+            <strong>${escapeHtml(payload.maskedPlate)}</strong>
+            <span>扫码后可拨号、发短信或复制提醒文案</span>
+            <small>完全免费 · 纯静态页面 · 无需后端</small>
           </div>
-          <span>访客二维码链接：<a href="${publicUrl}">${escapeHtml(publicUrl)}</a></span>
-          <span>车主管理链接：<a href="${manageUrl}">${escapeHtml(manageUrl)}</a></span>
-          <button type="button" onclick="window.print()">打印挪车卡片</button>
+          <span>访客链接：<a href="${moveUrl}">${escapeHtml(moveUrl)}</a></span>
+          <span>联系摘要：${renderContactSummary(payload)}</span>
+          <div class="actions actions-single">
+            <button type="button" id="copyMoveUrlButton">复制链接</button>
+            <button type="button" onclick="window.print()">打印挪车卡片</button>
+          </div>
+          <details class="payload-box">
+            <summary>查看本地配置备份</summary>
+            <pre class="command">${escapeHtml(JSON.stringify(payload, null, 2))}</pre>
+            <a download="${downloadName}" href="data:text/plain;charset=utf-8,${encodeURIComponent(
+              JSON.stringify(payload, null, 2)
+            )}">下载备份</a>
+          </details>
         </div>`
       );
+      document.querySelector("#copyMoveUrlButton")?.addEventListener("click", async () => {
+        await copyText(moveUrl);
+        show(bindResult, `${bindResult.innerHTML}<div class="form-note">链接已复制。</div>`);
+      });
     } catch (error) {
       show(bindResult, escapeHtml(error.message), true);
     }
   });
 }
 
-function setupOwnerPage() {
-  setApiInput();
-  const tokenInput = document.querySelector("#ownerToken");
-  tokenInput.value = params.get("ownerToken") || "";
-  const loadForm = document.querySelector("#ownerLoadForm");
-  const patchForm = document.querySelector("#ownerPatchForm");
-  const status = document.querySelector("#ownerStatus");
-  const patchResult = document.querySelector("#ownerPatchResult");
-  const regenerateButton = document.querySelector("#regenerateTokenButton");
-  const regenerateResult = document.querySelector("#regenerateResult");
-  const deleteButton = document.querySelector("#deleteVehicleButton");
-  const deleteResult = document.querySelector("#deleteVehicleResult");
+function setupMovePage() {
+  const encoded = params.get(CONFIG_PARAM) || "";
+  const vehicle = document.querySelector("#publicVehicle");
+  const result = document.querySelector("#contactResult");
+  const callButton = document.querySelector("#callButton");
+  const smsButton = document.querySelector("#smsButton");
+  const copyButton = document.querySelector("#copyButton");
+  const wechatButton = document.querySelector("#wechatButton");
+  const linkButton = document.querySelector("#customLinkButton");
 
-  async function loadOwner() {
-    const token = tokenInput.value.trim();
-    if (!token) throw new Error("请填写 ownerToken。");
-    const data = await request(`/api/owner/${encodeURIComponent(token)}/vehicle`);
-    const publicUrl = moveUrl(data.vehicleToken);
-    show(
-      status,
-      `<strong>${escapeHtml(data.maskedPlate)}</strong><br>
-       访客链接：<a href="${publicUrl}">${escapeHtml(publicUrl)}</a><br>
-       ShowDoc：${data.showdocEnabled ? "已配置" : "未配置"}<br>
-       微信：${data.wechatWorkEnabled ? "已配置" : "未配置"}<br>
-       短信：${data.smsEnabled ? "启用" : "停用"}，隐私号：${data.privacyCallEnabled ? "启用" : "停用"}<br>
-       最近通知：${data.recentNotifications?.length || 0} 条`
-    );
-    regenerateButton.disabled = false;
-    deleteButton.disabled = false;
-    return data;
+  let payload;
+  try {
+    if (!encoded) throw new Error("二维码内容缺失。请重新生成挪车二维码。");
+    payload = decodePayload(encoded);
+    if (!payload?.maskedPlate) throw new Error("二维码内容无效。");
+  } catch (error) {
+    show(vehicle, escapeHtml(error.message), true);
+    [callButton, smsButton, copyButton, wechatButton, linkButton].forEach((button) => {
+      if (button) button.disabled = true;
+    });
+    return;
   }
 
-  loadForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    show(status, "正在读取配置...");
-    try {
-      await loadOwner();
-    } catch (error) {
-      show(status, escapeHtml(error.message), true);
-    }
+  show(
+    vehicle,
+    `<strong>${escapeHtml(payload.maskedPlate)}</strong><br>
+     当前为静态免费版，不经过服务端。你可以直接联系车主或复制提醒文案。${payload.note ? `<br>备注：${escapeHtml(payload.note)}` : ""}`
+  );
+
+  callButton.disabled = !payload.ownerPhone;
+  smsButton.disabled = !payload.ownerPhone;
+  wechatButton.disabled = !payload.wechatId;
+  linkButton.disabled = !payload.customLink;
+
+  callButton?.addEventListener("click", () => {
+    location.href = `tel:${payload.ownerPhone}`;
   });
 
-  patchForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const token = tokenInput.value.trim();
-    const form = event.currentTarget;
-    const payload = {};
-    ["showdocWebhook", "showdocToken", "wechatWorkWebhook", "ownerPhone"].forEach((name) => {
-      const value = form[name].value.trim();
-      if (value) payload[name] = value;
-    });
-    const smsEnabled = boolValue(form, "smsEnabled");
-    const privacyCallEnabled = boolValue(form, "privacyCallEnabled");
-    if (smsEnabled !== undefined) payload.smsEnabled = smsEnabled;
-    if (privacyCallEnabled !== undefined) payload.privacyCallEnabled = privacyCallEnabled;
-    show(patchResult, "正在保存...");
-    try {
-      if (payload.showdocWebhook) payload.showdocWebhook = validateHttpUrl(payload.showdocWebhook, "ShowDoc Webhook");
-      if (payload.wechatWorkWebhook) {
-        payload.wechatWorkWebhook = validateHttpUrl(payload.wechatWorkWebhook, "企业微信群机器人 Webhook");
-      }
-      if (payload.ownerPhone) payload.ownerPhone = validatePhone(payload.ownerPhone, smsEnabled || privacyCallEnabled);
-      await request(`/api/owner/${encodeURIComponent(token)}/vehicle`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      show(patchResult, "保存成功。");
-      await loadOwner();
-    } catch (error) {
-      show(patchResult, escapeHtml(error.message), true);
-    }
+  smsButton?.addEventListener("click", () => {
+    const separator = /iphone|ipad|ipod/i.test(navigator.userAgent) ? "&" : "?";
+    location.href = `sms:${payload.ownerPhone}${separator}body=${encodeURIComponent(payload.smsText)}`;
   });
 
-  regenerateButton.addEventListener("click", async () => {
-    const token = tokenInput.value.trim();
-    if (!token) {
-      show(regenerateResult, "请先读取车辆配置。", true);
-      return;
-    }
-    show(regenerateResult, "正在重新生成访客二维码...");
-    try {
-      const data = await request(`/api/owner/${encodeURIComponent(token)}/vehicle/regenerate-token`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      const publicUrl = moveUrl(data.vehicleToken);
-      const qrUrl = qrImageUrl(publicUrl);
-      show(
-        regenerateResult,
-        `<strong>已重新生成</strong><br>
-         旧二维码将失效。<br>
-         新访客链接：<a href="${publicUrl}">${escapeHtml(publicUrl)}</a><br>
-         <img class="small-qr" src="${qrUrl}" alt="新挪车二维码" />`
-      );
-      await loadOwner();
-    } catch (error) {
-      show(regenerateResult, escapeHtml(error.message), true);
-    }
+  copyButton?.addEventListener("click", async () => {
+    await copyText(payload.smsText);
+    show(result, "提醒文案已复制，你可以粘贴到短信、微信或电话说明里。");
   });
 
-  deleteButton.addEventListener("click", async () => {
-    const token = tokenInput.value.trim();
-    if (!token) {
-      show(deleteResult, "请先读取车辆配置。", true);
-      return;
-    }
-    const confirmed = window.confirm("确定删除当前车辆绑定吗？删除后旧二维码和管理链接都会失效。");
-    if (!confirmed) return;
-    show(deleteResult, "正在删除绑定...");
-    try {
-      await request(`/api/owner/${encodeURIComponent(token)}/vehicle`, { method: "DELETE" });
-      regenerateButton.disabled = true;
-      deleteButton.disabled = true;
-      show(status, "车辆绑定已删除。旧二维码已失效。");
-      show(deleteResult, "删除成功。");
-    } catch (error) {
-      show(deleteResult, escapeHtml(error.message), true);
-    }
+  wechatButton?.addEventListener("click", async () => {
+    await copyText(payload.wechatId);
+    show(result, `车主微信号已复制：${escapeHtml(payload.wechatId)}。请在微信里搜索后联系。`);
   });
 
-  if (tokenInput.value) loadForm.requestSubmit();
+  linkButton?.addEventListener("click", () => {
+    window.open(payload.customLink, "_blank", "noopener");
+  });
 }
 
-function setupMovePage() {
-  const token = params.get("t") || "";
-  const result = document.querySelector("#notifyResult");
-  const vehicle = document.querySelector("#publicVehicle");
-  const buttons = document.querySelectorAll("[data-channel]");
-  const autoButton = document.querySelector("[data-auto-notify]");
-  let availableChannels = [];
-
-  async function loadPublic() {
-    if (!token) throw new Error("二维码缺少车辆 token。");
-    const data = await request(`/api/vehicles/${encodeURIComponent(token)}/public`);
-    availableChannels = data.availableChannels || [];
-    show(
-      vehicle,
-      `<strong>${escapeHtml(data.maskedPlate)}</strong><br>
-       可用通知：${availableChannels.map(escapeHtml).join("、") || "暂无"}`
-    );
-    autoButton.disabled = !availableChannels.length;
-    buttons.forEach((button) => {
-      button.disabled = !availableChannels.includes(button.dataset.channel);
-    });
-  }
-
-  autoButton.addEventListener("click", async () => {
-    show(result, "正在发送提醒...");
-    try {
-      const data = await request(`/api/vehicles/${encodeURIComponent(token)}/notify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      show(result, escapeHtml(data.message || "已通知车主。"));
-    } catch (error) {
-      show(result, escapeHtml(error.message), true);
-    }
-  });
-
-  buttons.forEach((button) => {
-    button.addEventListener("click", async () => {
-      show(result, "正在发送提醒...");
-      try {
-        const data = await request(`/api/vehicles/${encodeURIComponent(token)}/notify`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ channel: button.dataset.channel }),
-        });
-        show(result, escapeHtml(data.message || "已通知车主。"));
-      } catch (error) {
-        show(result, escapeHtml(error.message), true);
-      }
-    });
-  });
-
-  loadPublic().catch((error) => show(vehicle, escapeHtml(error.message), true));
+function setupOwnerPage() {
+  const status = document.querySelector("#ownerStatus");
+  show(
+    status,
+    "静态免费版不再提供服务端车主管理页。请回到首页重新生成二维码，或使用下载的本地配置备份重新编辑。"
+  );
 }
 
 function setupSetupPage() {
-  setApiInput();
   const status = document.querySelector("#setupStatus");
-  const form = document.querySelector("#setupCheckForm");
   const health = document.querySelector("#healthResult");
-  const configuredBase = window.MOVE_CAR_API_BASE || "";
   show(
     status,
-    `GitHub Pages：已加载<br>
-     Worker API：${configuredBase ? escapeHtml(configuredBase) : "未配置"}<br>
-     Demo 模式：${DEMO_MODE ? "启用" : "关闭"}`
+    "当前是完全免费静态版。无需数据库或云函数，只要能访问静态站点就可以使用。"
   );
-
-  form.addEventListener("submit", async (event) => {
+  document.querySelector("#setupCheckForm")?.addEventListener("submit", (event) => {
     event.preventDefault();
-    show(health, "正在检查 Worker...");
-    try {
-      const data = await request("/api/health");
-      show(
-        health,
-        `Worker：${escapeHtml(data.status)}<br>
-         D1：${data.d1 ? "已绑定" : "未绑定"}<br>
-         加密密钥：${data.encryption ? "已配置" : "未配置"}<br>
-         OCR 演示模式：${data.ocrDemo ? "已开启" : "未开启"}<br>
-         腾讯云 OCR：${data.tencentOcr ? "已配置" : "未配置"}<br>
-         短信：${data.tencentSms ? "已配置" : "未配置"}<br>
-         隐私号：${data.privacyCall ? "已配置" : "未配置"}<br>
-         缺失项：${data.missing?.length ? data.missing.map(escapeHtml).join("、") : "无"}`
-      );
-    } catch (error) {
-      show(health, escapeHtml(error.message), true);
-    }
+    show(
+      health,
+      "静态版检查项：1) 首页能打开；2) 能生成二维码；3) 扫码后 move.html 能拨号/发短信/复制文案。"
+    );
   });
 }
 
@@ -571,19 +306,17 @@ function setupDemoPage() {
   const flow = document.querySelector("#demoFlow");
   const replay = document.querySelector("#replayDemoButton");
   if (!flow || !replay) return;
-
-  function play() {
+  const play = () => {
     flow.classList.remove("is-playing");
     void flow.offsetWidth;
     flow.classList.add("is-playing");
-  }
-
+  };
   replay.addEventListener("click", play);
   play();
 }
 
 if (page === "bind") setupBindPage();
-if (page === "owner") setupOwnerPage();
 if (page === "move") setupMovePage();
+if (page === "owner") setupOwnerPage();
 if (page === "setup") setupSetupPage();
 if (page === "demo") setupDemoPage();
