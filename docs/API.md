@@ -24,14 +24,14 @@ Response:
 
 ```json
 {
-  "status": "degraded",
+  "status": "ok",
   "d1": true,
   "encryption": true,
-  "ocrDemo": false,
+  "ocrDemo": true,
   "tencentOcr": false,
   "tencentSms": false,
   "privacyCall": false,
-  "missing": ["TENCENT_SECRET_ID", "TENCENT_SECRET_KEY"]
+  "missing": []
 }
 ```
 
@@ -56,7 +56,7 @@ Response:
 }
 ```
 
-Required config:
+Real Tencent OCR config, optional when `OCR_DEMO_MODE=true`:
 
 - `TENCENT_SECRET_ID`
 - `TENCENT_SECRET_KEY`
@@ -72,7 +72,7 @@ Validation errors:
 - `invalid_image_type`: uploaded file is not an image
 - `image_too_large`: uploaded image is larger than `MAX_OCR_IMAGE_BYTES` or the default 4MB limit
 
-The Worker forwards the image to Tencent Cloud OCR and does not store the original photo in D1.
+When Tencent OCR secrets are configured, the Worker forwards the image to Tencent Cloud OCR and does not store the original photo in D1. When `OCR_DEMO_MODE=true` and Tencent OCR secrets are absent, the Worker returns a server-side demo plate so the binding and notification flow can still be demonstrated without paid OCR.
 
 ## `POST /api/vehicles`
 
