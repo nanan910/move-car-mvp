@@ -33,7 +33,7 @@ It uploads the listed files to `nanan910/move-car-mvp` on `main` through `gh api
 - 部署检查页：[https://nanan910.github.io/move-car-mvp/setup.html](https://nanan910.github.io/move-car-mvp/setup.html)
 - 隐私说明页：[https://nanan910.github.io/move-car-mvp/privacy.html](https://nanan910.github.io/move-car-mvp/privacy.html)
 - 当前线上版本已指向 Cloudflare Worker：`https://move-car-api.nanan910-move-car.workers.dev`。
-- D1、Worker、加密密钥和 IP 哈希盐已配置；腾讯云 OCR 需要设置 `TENCENT_SECRET_ID` / `TENCENT_SECRET_KEY` 后才会从 `degraded` 变为 `ok`。
+- D1、Worker、加密密钥和 IP 哈希盐已配置；腾讯云 OCR 是可选项，当前可继续使用服务端 OCR demo/手动确认车牌完成演示。
 
 ## 当前状态
 
@@ -46,7 +46,7 @@ It uploads the listed files to `nanan910/move-car-mvp` on `main` through `gh api
 
 ## 功能
 
-- 车主绑定页：上传车牌照片，服务端调用腾讯云车牌 OCR，确认车牌后创建绑定。
+- 车主绑定页：上传车牌照片，服务端可调用 OCR demo 或以后接入腾讯云车牌 OCR，确认车牌后创建绑定。
 - 挪车卡片：绑定成功后生成可打印二维码卡片，适合放在车内。
 - 车主管理页：通过 `ownerToken` 管理密钥链接更新通知配置、重新生成访客二维码、查看最近通知状态。
 - 访客挪车页：通过 `vehicleToken` 二维码打开，只显示脱敏车牌、一键通知按钮和可用通知通道。
@@ -118,19 +118,19 @@ Worker 运行时密钥可用交互脚本配置：
 .\scripts\set-worker-secrets.ps1
 ```
 
-如果只需要补腾讯云车牌 OCR 密钥，可运行更短的脚本：
+腾讯云车牌 OCR 是可选项。如果暂时不付费接入，可以保留 `OCR_DEMO_MODE`，先验收真实通知链路。以后只需要补腾讯云车牌 OCR 密钥时，可运行：
 
 ```powershell
 .\scripts\set-ocr-secrets.ps1 -Deploy
 ```
 
-从 OCR 演示模式切到正式腾讯云 OCR，推荐运行：
+以后从 OCR 演示模式切到正式腾讯云 OCR，可运行：
 
 ```powershell
 .\scripts\promote-production.ps1
 ```
 
-该脚本会设置腾讯云 OCR secrets、删除 `OCR_DEMO_MODE`、部署 Worker，并运行生产检查。
+该脚本会设置腾讯云 OCR secrets、删除 `OCR_DEMO_MODE`、部署 Worker，并运行生产检查。当前不接入腾讯 OCR 时可以跳过。
 
 没有腾讯云 OCR 密钥时，也可以临时开启服务端 OCR 演示模式完成绑定流程演示：
 
@@ -139,7 +139,7 @@ Worker 运行时密钥可用交互脚本配置：
 npx wrangler deploy --config worker/wrangler.toml
 ```
 
-配置真实 `TENCENT_SECRET_ID` / `TENCENT_SECRET_KEY` 后，Worker 会自动优先使用腾讯云 OCR；正式生产仍建议删除 `OCR_DEMO_MODE`，避免健康检查和运维判断混淆。
+配置真实 `TENCENT_SECRET_ID` / `TENCENT_SECRET_KEY` 后，Worker 会自动优先使用腾讯云 OCR；不配置时保留 `OCR_DEMO_MODE` 即可继续演示和手动确认车牌。
 
 生产部署后可运行：
 
@@ -264,8 +264,8 @@ git push -u origin main
 | 名称 | 必填 | 说明 |
 | --- | --- | --- |
 | `DATA_ENCRYPTION_KEY` | 是 | 用于 AES-GCM 加密手机号和 ShowDoc token |
-| `TENCENT_SECRET_ID` | OCR 必填 | 腾讯云 SecretId |
-| `TENCENT_SECRET_KEY` | OCR 必填 | 腾讯云 SecretKey |
+| `TENCENT_SECRET_ID` | OCR 可选 | 腾讯云 SecretId；暂不接入腾讯 OCR 时可不填 |
+| `TENCENT_SECRET_KEY` | OCR 可选 | 腾讯云 SecretKey；暂不接入腾讯 OCR 时可不填 |
 | `TENCENT_OCR_REGION` | 否 | 默认 `ap-guangzhou` |
 | `MAX_OCR_IMAGE_BYTES` | 否 | 车牌 OCR 上传图片大小上限，默认 `4194304` |
 | `TENCENT_SMS_APP_ID` | 短信必填 | 腾讯云短信应用 ID |
