@@ -13,6 +13,18 @@ powershell -ExecutionPolicy Bypass -File scripts\verify-production-notifications
 
 The script asks for `SHOWDOC_WEBHOOK`, optional `SHOWDOC_TOKEN`, and `WECHAT_WORK_WEBHOOK`. Leave one channel empty if you only want to test the other. It creates disposable test bindings, verifies the public visitor API does not leak webhook URLs or tokens, sends a real notification for each configured channel, checks that repeated notification is rate limited, and then deletes the test bindings it created.
 
+## GitHub API sync fallback
+
+If normal `git push` fails because SSH authentication is unavailable, use the API sync helper after committing locally:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\sync-github-api.ps1 `
+  -Message "Update files" `
+  -Files public/app.js public/setup.html
+```
+
+It uploads the listed files to `nanan910/move-car-mvp` on `main` through `gh api`.
+
 一个可演示的匿名扫码挪车项目：车主上传车牌照片完成识别绑定，系统生成车辆专属二维码；访客扫码后一键通知车主，但不会看到车主手机号、微信、ShowDoc token 或完整绑定资料。
 
 ## 在线演示
