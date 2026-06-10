@@ -3,87 +3,26 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>扫码挪车 - 车主管理</title>
+    <title>扫码挪车 - 说明</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body data-page="owner">
     <header class="topbar">
       <a class="brand" href="./index.html">扫码挪车</a>
       <nav>
-        <a href="./index.html">车主绑定</a>
-        <a href="./owner.html">车主管理</a>
-        <a href="./demo.html">????</a>
-        <a href="./setup.html">部署检查</a>
-        <a href="./privacy.html">隐私说明</a>
+        <a href="./index.html">生成二维码</a>
+        <a href="./setup.html">使用说明</a>
       </nav>
     </header>
 
-    <main class="shell">
+    <main class="shell compact">
       <section class="panel intro">
-        <p class="eyebrow">车主专属链接</p>
-        <h1>管理车辆通知配置</h1>
-        <p>使用绑定完成后生成的 ownerToken 链接打开此页，更新通知配置或复制挪车二维码链接。</p>
+        <p class="eyebrow">静态版说明</p>
+        <h1>这个版本不再提供车主管理后台</h1>
+        <p>完全免费静态版不依赖服务器，所以没有管理链接、通知日志和远程更新。需要改内容时，请回到首页重新生成二维码。</p>
       </section>
-
       <section class="panel">
-        <h2>车辆状态</h2>
-        <form id="ownerLoadForm" class="stack">
-          <label>
-            API 地址
-            <input id="apiBase" name="apiBase" placeholder="https://your-worker.example.workers.dev" />
-          </label>
-          <label>
-            ownerToken
-            <input id="ownerToken" name="ownerToken" placeholder="从管理链接中自动读取，也可手动粘贴" required />
-          </label>
-          <button type="submit">读取车辆配置</button>
-        </form>
-        <div id="ownerStatus" class="result hidden"></div>
-        <button id="regenerateTokenButton" class="primary-action" type="button" disabled>重新生成访客二维码</button>
-        <div id="regenerateResult" class="result hidden"></div>
-        <button id="deleteVehicleButton" class="danger-action" type="button" disabled>删除当前车辆绑定</button>
-        <div id="deleteVehicleResult" class="result hidden"></div>
-      </section>
-
-      <section class="panel">
-        <h2>更新配置</h2>
-        <form id="ownerPatchForm" class="grid-form">
-          <label>
-            ShowDoc Webhook
-            <input id="showdocWebhook" name="showdocWebhook" placeholder="留空则不修改" inputmode="url" />
-          </label>
-          <label>
-            ShowDoc Token
-            <input id="showdocToken" name="showdocToken" type="password" placeholder="留空则不修改" />
-          </label>
-          <label>
-            企业微信群机器人 Webhook
-            <input id="wechatWorkWebhook" name="wechatWorkWebhook" placeholder="留空则不修改" inputmode="url" />
-          </label>
-          <label>
-            车主手机号
-            <input id="ownerPhone" name="ownerPhone" inputmode="tel" placeholder="留空则不修改" />
-          </label>
-          <label>
-            短信通知
-            <select id="smsEnabled" name="smsEnabled">
-              <option value="">不修改</option>
-              <option value="true">启用</option>
-              <option value="false">停用</option>
-            </select>
-          </label>
-          <label>
-            隐私号呼叫
-            <select id="privacyCallEnabled" name="privacyCallEnabled">
-              <option value="">不修改</option>
-              <option value="true">启用</option>
-              <option value="false">停用</option>
-            </select>
-          </label>
-          <button type="submit">保存更新</button>
-        </form>
-        <p class="form-note">更新后的手机号和 ShowDoc token 仍只保存在服务端，不会返回给访客页面。</p>
-        <div id="ownerPatchResult" class="result hidden"></div>
+        <div id="ownerStatus" class="result"></div>
       </section>
     </main>
 
