@@ -1,5 +1,15 @@
 # Cloudflare Worker 真实后端部署
 
+## Production notification verification
+
+Both ShowDoc and WeChat Work robot notification channels are supported and should stay enabled when you need both. After deployment, run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\verify-production-notifications.ps1
+```
+
+The script prompts for `SHOWDOC_WEBHOOK`, optional `SHOWDOC_TOKEN`, and `WECHAT_WORK_WEBHOOK`. It does not write these values to the repository. It creates disposable production test bindings, confirms the public API only exposes channel names, sends one real ShowDoc notification and one real WeChat notification when both are provided, and verifies notification rate limiting.
+
 GitHub Pages 已经可以运行浏览器 demo。要启用真实扫码通知，需要完成 Cloudflare Worker、D1、腾讯云和通知密钥配置。
 
 ## 1. 准备 Cloudflare
