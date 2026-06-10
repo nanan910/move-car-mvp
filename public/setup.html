@@ -3,66 +3,42 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>扫码挪车 - 部署检查</title>
+    <title>扫码挪车 - 使用说明</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body data-page="setup">
     <header class="topbar">
       <a class="brand" href="./index.html">扫码挪车</a>
       <nav>
-        <a href="./index.html">车主绑定</a>
-        <a href="./owner.html">车主管理</a>
-        <a href="./demo.html">????</a>
-        <a href="./setup.html">部署检查</a>
+        <a href="./index.html">生成二维码</a>
+        <a href="./demo.html">流程演示</a>
         <a href="./privacy.html">隐私说明</a>
       </nav>
     </header>
 
     <main class="shell">
       <section class="panel intro">
-        <p class="eyebrow">上线前检查</p>
-        <h1>确认 GitHub Pages 与 Worker 配置状态</h1>
-        <p>先用浏览器 demo 演示，等 Cloudflare Worker 和密钥配置完成后，在这里检查真实后端是否可用。</p>
+        <p class="eyebrow">使用说明</p>
+        <h1>完全免费静态版怎么用</h1>
+        <p>这个版本只需要静态网页托管，不需要数据库、云函数或短信服务。</p>
       </section>
 
       <section class="panel">
-        <h2>当前前端配置</h2>
-        <div id="setupStatus" class="result">正在读取配置...</div>
+        <h2>当前状态</h2>
+        <div id="setupStatus" class="result">正在读取说明...</div>
         <form id="setupCheckForm" class="stack">
-          <label>
-            临时 Worker API 地址
-            <input id="apiBase" name="apiBase" placeholder="https://your-worker.example.workers.dev" />
-          </label>
-          <button type="submit">检查 Worker 健康状态</button>
+          <button type="submit">查看静态版检查项</button>
         </form>
         <div id="healthResult" class="result hidden"></div>
       </section>
 
       <section class="panel">
-        <h2>最后上线验收命令</h2>
-        <p class="form-note">腾讯云 OCR 暂时不接入时，可以跳过 OCR 密钥；先验收真实通知。不要把密钥或 webhook 发到聊天里。</p>
-        <div class="command-list">
-          <div>
-            <strong>1. 验证 ShowDoc + 微信真实通知</strong>
-            <pre class="command">cd C:\Users\32452\Documents\Codex\2026-06-09\goal-github
-powershell -ExecutionPolicy Bypass -File scripts\verify-production-notifications.ps1</pre>
-          </div>
-          <div>
-            <strong>2. 可选：以后再切换到真实腾讯云 OCR</strong>
-            <pre class="command">cd C:\Users\32452\Documents\Codex\2026-06-09\goal-github
-powershell -ExecutionPolicy Bypass -File scripts\promote-production.ps1</pre>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel">
-        <h2>真实上线清单</h2>
+        <h2>最简单的使用步骤</h2>
         <ul class="checklist">
-          <li>GitHub Pages 已启用，并能访问静态前端。</li>
-          <li>Cloudflare D1 已创建，`worker/wrangler.toml` 已填写真实 `database_id`。</li>
-          <li>GitHub Actions secrets 已添加 `CLOUDFLARE_API_TOKEN` 和 `CLOUDFLARE_ACCOUNT_ID`。</li>
-          <li>Worker secrets 已设置 `DATA_ENCRYPTION_KEY`、`IP_HASH_SALT`；腾讯云 OCR 密钥是可选项。</li>
-          <li>`public/config.js` 已填写 Worker API 地址，并将 demo 模式关闭。</li>
+          <li>打开首页，填写车牌和联系方式。</li>
+          <li>生成二维码并打印挪车卡片。</li>
+          <li>访客扫码后，通过电话、短信或复制文案联系车主。</li>
+          <li>需要更新联系方式时，回首页重新生成二维码。</li>
         </ul>
       </section>
     </main>
