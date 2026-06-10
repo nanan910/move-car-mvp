@@ -10,10 +10,9 @@
     <header class="topbar">
       <a class="brand" href="./index.html">扫码挪车</a>
       <nav>
-        <a href="./index.html">车主绑定</a>
-        <a href="./owner.html">车主管理</a>
+        <a href="./index.html">生成二维码</a>
         <a href="./demo.html">流程演示</a>
-        <a href="./setup.html">部署检查</a>
+        <a href="./setup.html">使用说明</a>
         <a href="./privacy.html">隐私说明</a>
       </nav>
     </header>
@@ -21,8 +20,8 @@
     <main class="shell">
       <section class="panel intro">
         <p class="eyebrow">演示动画</p>
-        <h1>从扫码到通知车主的完整过程</h1>
-        <p>这个页面只做演示，不会真实发送通知。适合快速说明：访客扫车内二维码，系统匿名转发提醒，车主通过企业微信或 ShowDoc 收到消息。</p>
+        <h1>从扫码到联系车主的完整流程</h1>
+        <p>这个页面只做演示，不会真的发消息。静态免费版的思路是：车主本地生成二维码，访客扫码后直接拨号、发短信或复制提醒文案。</p>
       </section>
 
       <section class="panel demo-stage">
@@ -33,31 +32,28 @@
         <div id="demoFlow" class="demo-flow">
           <section class="demo-column">
             <div class="demo-card">
-              <span class="demo-badge">访客</span>
-              <h2>扫码发起挪车</h2>
+              <span class="demo-badge">车主</span>
+              <h2>本地生成挪车二维码</h2>
               <div class="demo-qr">
                 <div class="demo-qr-grid"></div>
               </div>
-              <p>访客只看到脱敏车牌和提醒按钮，看不到手机号、微信号或任何 webhook。</p>
-              <div class="demo-bubble demo-step" style="--delay: 0s;">扫描二维码</div>
-              <div class="demo-bubble demo-step" style="--delay: 0.9s;">点击“一键通知车主”</div>
+              <p>车主在浏览器里填写车牌和联系方式，页面直接生成可打印的挪车卡片，不需要后端。</p>
+              <div class="demo-bubble demo-step" style="--delay: 0s;">填写车牌和手机号</div>
+              <div class="demo-bubble demo-step" style="--delay: 0.9s;">生成并打印二维码</div>
             </div>
           </section>
 
           <section class="demo-column demo-column-center">
             <div class="demo-card">
-              <span class="demo-badge">Worker</span>
-              <h2>匿名转发提醒</h2>
+              <span class="demo-badge">访客</span>
+              <h2>扫码查看联系入口</h2>
               <div class="demo-server demo-step" style="--delay: 1.8s;">
-                <div class="demo-server-lights">
-                  <i></i><i></i><i></i>
-                </div>
-                <strong>Cloudflare Worker</strong>
-                <small>校验 vehicleToken、记录日志、限流、选择通知通道</small>
+                <strong>打开静态访客页</strong>
+                <small>显示脱敏车牌、拨号按钮、短信按钮和复制提醒文案按钮。</small>
               </div>
               <div class="demo-shield demo-step" style="--delay: 2.6s;">
-                <strong>隐私保护</strong>
-                <span>车主手机号、ShowDoc token、企业微信 webhook 只在服务端使用</span>
+                <strong>更轻的免费方案</strong>
+                <span>不依赖云函数和数据库，但也不提供服务端匿名中转。</span>
               </div>
             </div>
             <div class="demo-beam demo-step" style="--delay: 3.4s;"></div>
@@ -65,20 +61,16 @@
 
           <section class="demo-column">
             <div class="demo-card">
-              <span class="demo-badge">车主</span>
-              <h2>接收提醒</h2>
+              <span class="demo-badge">联系</span>
+              <h2>直接提醒车主挪车</h2>
               <div class="demo-phone demo-step" style="--delay: 4.2s;">
                 <div class="demo-phone-screen">
-                  <p class="demo-phone-title">扫码挪车提醒</p>
-                  <div class="demo-message demo-step" style="--delay: 4.8s;">
-                    企业微信：车辆 粤B***45 收到挪车提醒，请及时处理。
-                  </div>
-                  <div class="demo-message demo-step" style="--delay: 5.6s;">
-                    ShowDoc：车辆 粤B***45 收到挪车提醒，请及时处理。
-                  </div>
+                  <p class="demo-phone-title">联系车主</p>
+                  <div class="demo-message demo-step" style="--delay: 4.8s;">拨打电话：直接呼叫车主</div>
+                  <div class="demo-message demo-step" style="--delay: 5.6s;">发送短信：预填“请尽快挪车”文案</div>
                 </div>
               </div>
-              <div class="demo-bubble demo-step" style="--delay: 6.4s;">车主收到提醒后自行挪车</div>
+              <div class="demo-bubble demo-step" style="--delay: 6.4s;">访客完成提醒，车主自行处理</div>
             </div>
           </section>
         </div>
