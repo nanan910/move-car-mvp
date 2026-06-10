@@ -3,7 +3,7 @@ param(
   [string]$Branch = "main",
   [Parameter(Mandatory = $true)]
   [string]$Message,
-  [Parameter(Mandatory = $true)]
+  [Parameter(Mandatory = $true, ValueFromRemainingArguments = $true)]
   [string[]]$Files
 )
 
@@ -32,7 +32,8 @@ foreach ($path in $Files) {
 
   $sha = $null
   try {
-    $sha = gh api "repos/$Repo/contents/$repoPath" --jq ".sha" 2>$null
+    $shaOutput = & gh api "repos/$Repo/contents/$repoPath" --jq ".sha" 2>$null
+    if ($LASTEXITCODE -eq 0) { $sha = $shaOutput }
   } catch {
     $sha = $null
   }
